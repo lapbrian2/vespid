@@ -21,16 +21,13 @@
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html {
-      scroll-behavior: auto;
-    }
-
     body {
       background: #09090B;
       color: #F5F5F0;
       font-family: 'Geist', sans-serif;
-      cursor: crosshair;
-      overscroll-behavior: none;
+      overflow: hidden;
+      height: 100vh;
+      cursor: default;
     }
 
     /* ── Loading ─────────────────────────────────────── */
@@ -64,103 +61,37 @@
       100% { transform: translateX(100%); }
     }
 
-    /* ── Canvas (fixed background) ───────────────────── */
-    #three-canvas {
-      position: fixed; inset: 0; z-index: -1;
-    }
+    /* ── Canvas ──────────────────────────────────────── */
+    canvas { display: block; position: fixed; inset: 0; }
 
-    /* ── Scroll container ────────────────────────────── */
-    #scroll-container {
-      position: relative; z-index: 1;
-      isolation: isolate;
+    /* ── Title — top left ────────────────────────────── */
+    #title {
+      position: fixed; top: 32px; left: 40px; z-index: 10;
+      opacity: 0; transition: opacity 0.8s ease 0.3s;
     }
-
-    /* ── Sections ────────────────────────────────────── */
-    .section {
-      min-height: 100vh;
-      display: flex; align-items: center;
-      position: relative;
-      padding: 0 clamp(32px, 6vw, 120px);
-    }
-
-    .section-hero {
-      justify-content: flex-start;
-      min-height: 100vh;
-    }
-
-    .section-content {
-      max-width: 440px;
-    }
-    .section-content.right {
-      margin-left: auto;
-    }
-
-    .section-overline {
-      font-weight: 500; font-size: 10px;
-      letter-spacing: 0.35em; text-transform: uppercase;
-      color: #B8964E; margin-bottom: 12px;
-    }
-
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300; font-size: clamp(32px, 5vw, 56px);
-      line-height: 1.15; letter-spacing: -0.02em;
-      color: #F5F5F0; margin-bottom: 16px;
-    }
-
-    .section-body {
-      font-weight: 400; font-size: 15px;
-      line-height: 1.7; color: #A1A1AA;
-      max-width: 380px;
-    }
-
-    .section-number {
+    #title.visible { opacity: 1; }
+    .title-label {
       font-family: 'Geist Mono', monospace;
-      font-size: 11px; color: #71717A;
-      letter-spacing: 0.1em;
-      position: absolute; top: 40px; left: clamp(32px, 6vw, 120px);
+      font-size: 11px; color: #52525B; letter-spacing: 0.12em;
     }
-
-    /* ── Hero Title ──────────────────────────────────── */
-    .hero-content {
-      padding-top: 30vh;
-    }
-    .hero-label {
-      font-family: 'Geist Mono', monospace;
-      font-size: 12px; color: #71717A;
-      letter-spacing: 0.1em; margin-bottom: 16px;
-    }
-    .hero-title {
+    .title-name {
       font-family: 'Cormorant Garamond', serif;
-      font-weight: 300; font-size: clamp(48px, 8vw, 96px);
-      line-height: 1.05; letter-spacing: -0.03em;
-      color: #F5F5F0;
+      font-weight: 300; font-size: 28px;
+      color: #F5F5F0; margin-top: 4px;
+      letter-spacing: -0.02em;
     }
-    .hero-species {
+    .title-species {
       font-family: 'Cormorant Garamond', serif;
       font-weight: 300; font-style: italic;
-      font-size: clamp(18px, 2.5vw, 28px);
-      color: #71717A; margin-top: 12px;
-    }
-    .hero-scroll {
-      font-family: 'Geist Mono', monospace;
-      font-size: 10px; color: #52525B;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      position: absolute; bottom: 40px;
-      left: 50%; transform: translateX(-50%);
-      animation: pulse 2s ease infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 1; }
+      font-size: 14px; color: #52525B; margin-top: 2px;
     }
 
-    /* ── State Controls ──────────────────────────────── */
+    /* ── State buttons — bottom center ───────────────── */
     #controls {
       position: fixed; bottom: 32px; left: 50%;
       transform: translateX(-50%);
       display: flex; gap: 28px; z-index: 10;
-      opacity: 0; transition: opacity 0.6s ease;
+      opacity: 0; transition: opacity 0.8s ease 0.5s;
     }
     #controls.visible { opacity: 1; }
     .state-btn {
@@ -168,26 +99,23 @@
       font-size: 10px; letter-spacing: 0.15em;
       text-transform: uppercase; color: #52525B;
       background: none; border: none; cursor: pointer;
-      padding: 4px 0;
+      padding: 6px 0;
       border-bottom: 1px solid transparent;
       transition: color 0.3s, border-color 0.3s;
     }
-    .state-btn:hover { color: #F5F5F0; }
+    .state-btn:hover { color: #A1A1AA; }
     .state-btn.active { color: #F5F5F0; border-bottom-color: #B8964E; }
 
-    /* ── Hotspot Label ───────────────────────────────── */
-    #label-container {
-      position: fixed; inset: 0;
-      pointer-events: none; z-index: 5;
-    }
+    /* ── Hotspot label ───────────────────────────────── */
     #label {
-      position: absolute; opacity: 0;
-      transition: opacity 0.2s ease;
+      position: fixed;
+      pointer-events: none; z-index: 15;
+      opacity: 0; transition: opacity 0.2s ease;
     }
     #label.visible { opacity: 1; }
     .label-line {
       width: 1px; height: 32px;
-      background: #71717A; margin-bottom: 6px;
+      background: #52525B; margin-bottom: 6px;
     }
     .label-name {
       font-weight: 500; font-size: 10px;
@@ -196,24 +124,25 @@
     }
     .label-fact {
       font-weight: 400; font-size: 13px;
-      color: #F5F5F0; max-width: 280px; line-height: 1.5;
+      color: #E4E4E7; max-width: 260px; line-height: 1.5;
     }
 
-    /* ── Scroll progress ─────────────────────────────── */
-    #progress {
-      position: fixed; top: 0; left: 0;
-      width: 0; height: 1px;
-      background: #B8964E; z-index: 100;
-      transition: width 0.1s linear;
+    /* ── Nav arrows — bottom corners ─────────────────── */
+    .nav-link {
+      position: fixed; bottom: 32px; z-index: 10;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px; letter-spacing: 0.1em;
+      color: #52525B; text-decoration: none;
+      transition: color 0.3s;
+      opacity: 0; transition: opacity 0.8s ease 0.7s, color 0.3s;
     }
-
-    /* ── Section reveal animations (GSAP controls opacity/transform) ── */
+    .nav-link.visible { opacity: 1; }
+    .nav-link:hover { color: #A1A1AA; }
+    .nav-prev { left: 40px; }
+    .nav-next { right: 40px; }
   </style>
 </head>
 <body>
-
-  <!-- Progress bar -->
-  <div id="progress"></div>
 
   <!-- Loading -->
   <div id="loading">
@@ -222,557 +151,283 @@
     <div class="loading-sub">[01] VESPID</div>
   </div>
 
-  <!-- Controls -->
+  <!-- Title -->
+  <div id="title">
+    <div class="title-label">[01] VESPID</div>
+    <div class="title-name">Vespid</div>
+    <div class="title-species">Vespa orientalis</div>
+  </div>
+
+  <!-- State buttons -->
   <div id="controls">
-    <button class="state-btn active" data-state="Idle">Idle</button>
-    <button class="state-btn" data-state="Agitated">Agitated</button>
-    <button class="state-btn" data-state="Attack">Attack</button>
+    <button class="state-btn active" data-state="idle">Idle</button>
+    <button class="state-btn" data-state="hover">Hover</button>
+    <button class="state-btn" data-state="fly">Fly</button>
   </div>
 
-  <!-- Hotspot Label -->
-  <div id="label-container">
-    <div id="label">
-      <div class="label-line"></div>
-      <div class="label-name"></div>
-      <div class="label-fact"></div>
-    </div>
+  <!-- Hotspot label -->
+  <div id="label">
+    <div class="label-line"></div>
+    <div class="label-name"></div>
+    <div class="label-fact"></div>
   </div>
 
-  <!-- Three.js Canvas -->
-  <div id="three-canvas"></div>
-
-  <!-- Scroll Sections -->
-  <div id="scroll-container">
-
-    <!-- Hero -->
-    <section class="section section-hero">
-      <div class="hero-content">
-        <div class="hero-label">[01] VESPID</div>
-        <h1 class="hero-title">Vespid</h1>
-        <p class="hero-species">Vespa orientalis</p>
-      </div>
-      <div class="hero-scroll">Scroll</div>
-    </section>
-
-    <!-- Anatomy: Thorax -->
-    <section class="section" data-camera-target="thorax">
-      <span class="section-number">[02]</span>
-      <div class="section-content">
-        <div class="section-overline">Thorax</div>
-        <h2 class="section-title">Pure flight muscle</h2>
-        <p class="section-body">
-          Three fused segments house the indirect flight muscles
-          that power both wing pairs. The thorax is the engine
-          that makes a wasp airborne in milliseconds.
-        </p>
-      </div>
-    </section>
-
-    <!-- Anatomy: Petiole -->
-    <section class="section" data-camera-target="petiole">
-      <span class="section-number">[03]</span>
-      <div class="section-content right reveal">
-        <div class="section-overline">Petiole</div>
-        <h2 class="section-title">The wasp waist</h2>
-        <p class="section-body">
-          The narrow petiole connecting thorax to abdomen isn't
-          just aesthetic — it allows the abdomen to curl
-          underneath for stinging. Form follows function.
-        </p>
-      </div>
-    </section>
-
-    <!-- Anatomy: Stinger -->
-    <section class="section" data-camera-target="stinger">
-      <span class="section-number">[04]</span>
-      <div class="section-content">
-        <div class="section-overline">Stinger</div>
-        <h2 class="section-title">Smooth. Reusable.</h2>
-        <p class="section-body">
-          Unlike a bee's barbed stinger, a wasp's ovipositor
-          is smooth — it can sting repeatedly without
-          self-destructing. The venom is alkaline, designed
-          to paralyze prey, not just warn predators.
-        </p>
-      </div>
-    </section>
-
-    <!-- Anatomy: Eyes -->
-    <section class="section" data-camera-target="eyes">
-      <span class="section-number">[05]</span>
-      <div class="section-content right reveal">
-        <div class="section-overline">Compound Eyes</div>
-        <h2 class="section-title">You were seen first</h2>
-        <p class="section-body">
-          Nearly 360-degree vision from thousands of hexagonal
-          lenses. Wasps detect ultraviolet patterns invisible
-          to humans. They track movement faster than any
-          vertebrate eye.
-        </p>
-      </div>
-    </section>
-
-    <!-- Anatomy: Wings -->
-    <section class="section" data-camera-target="wings">
-      <span class="section-number">[06]</span>
-      <div class="section-content">
-        <div class="section-overline">Wings</div>
-        <h2 class="section-title">40 beats per second</h2>
-        <p class="section-body">
-          Two pairs of wings, hooked together mid-flight by
-          tiny hamuli. Forewings generate lift, hindwings
-          stabilize. At rest, they fold flat along the body —
-          ready to deploy in an instant.
-        </p>
-      </div>
-    </section>
-
-    <!-- Spacer for scroll -->
-    <section class="section" style="min-height: 50vh;"></section>
-
-  </div>
-
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+  <!-- Nav -->
+  <a href="#" class="nav-link nav-prev">&lt;Prev</a>
+  <a href="#" class="nav-link nav-next">Next&gt;</a>
 
   <script type="importmap">
-    {
-      "imports": {
+    { "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-      }
-    }
+    }}
   </script>
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-    gsap.registerPlugin(ScrollTrigger);
 
     // ════════════════════════════════════════════════════════════════
     // SCENE
     // ════════════════════════════════════════════════════════════════
     const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x06060a, 0.4);
 
     const camera = new THREE.PerspectiveCamera(
-      30, window.innerWidth / window.innerHeight, 0.01, 100
+      30, window.innerWidth / window.innerHeight, 0.01, 50
     );
-    camera.position.set(0.15, 0.05, 1.6);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 0.05, 1.8);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setClearColor(0x000000, 0);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x09090B);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.6;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.getElementById('three-canvas').appendChild(renderer.domElement);
+    renderer.toneMappingExposure = 1.5;
+    document.body.appendChild(renderer.domElement);
+
 
     // ════════════════════════════════════════════════════════════════
-    // LIGHTING — dramatic, cinematic
+    // LIGHTING
     // ════════════════════════════════════════════════════════════════
-    const keyLight = new THREE.DirectionalLight(0xFFE4B5, 2.5);
-    keyLight.position.set(4, 4, 5);
-    keyLight.castShadow = true;
-    scene.add(keyLight);
+    scene.add(new THREE.AmbientLight(0x333344, 0.6));
 
-    const rimLight = new THREE.DirectionalLight(0x4466CC, 1.2);
-    rimLight.position.set(-4, 1, -4);
-    scene.add(rimLight);
+    const key = new THREE.DirectionalLight(0xFFE4B5, 2.5);
+    key.position.set(4, 4, 5);
+    scene.add(key);
 
-    const ambient = new THREE.AmbientLight(0x333344, 0.8);
-    scene.add(ambient);
+    const rim = new THREE.DirectionalLight(0x4466CC, 1.0);
+    rim.position.set(-4, 1, -4);
+    scene.add(rim);
 
-    const fillLight = new THREE.DirectionalLight(0xFFDDBB, 0.5);
-    fillLight.position.set(-2, -3, 3);
-    scene.add(fillLight);
+    const fill = new THREE.DirectionalLight(0xFFDDBB, 0.4);
+    fill.position.set(-2, -2, 3);
+    scene.add(fill);
 
-    const topLight = new THREE.DirectionalLight(0xFFFFEE, 0.4);
-    topLight.position.set(0, 6, 0);
-    scene.add(topLight);
+    const top = new THREE.DirectionalLight(0xFFFFEE, 0.3);
+    top.position.set(0, 5, 0);
+    scene.add(top);
 
-    // Environment map for chitin reflections
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const envScene = new THREE.Scene();
-    envScene.add(new THREE.Mesh(
+    // Environment map
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envS = new THREE.Scene();
+    envS.add(new THREE.Mesh(
       new THREE.SphereGeometry(10, 32, 16),
       new THREE.MeshBasicMaterial({ color: 0x0a0a12, side: THREE.BackSide })
     ));
-    const spotGeo = new THREE.SphereGeometry(0.5, 8, 8);
-    const s1 = new THREE.Mesh(spotGeo, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }));
-    s1.position.set(4, 4, 4);
-    envScene.add(s1);
-    const s2 = new THREE.Mesh(spotGeo.clone(), new THREE.MeshBasicMaterial({ color: 0x3355AA }));
-    s2.position.set(-4, -1, -3);
-    envScene.add(s2);
-    scene.environment = pmremGenerator.fromScene(envScene, 0.04).texture;
-    pmremGenerator.dispose();
+    const sg = new THREE.SphereGeometry(0.5, 8, 8);
+    const s1 = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }));
+    s1.position.set(4, 4, 4); envS.add(s1);
+    const s2 = new THREE.Mesh(sg.clone(), new THREE.MeshBasicMaterial({ color: 0x3355AA }));
+    s2.position.set(-4, -1, -3); envS.add(s2);
+    scene.environment = pmrem.fromScene(envS, 0.04).texture;
+    pmrem.dispose();
+
 
     // ════════════════════════════════════════════════════════════════
-    // WORLD BUILDING — fog, ground, particles, atmosphere
+    // PARTICLES — floating dust motes
     // ════════════════════════════════════════════════════════════════
-
-    // Exponential fog — creates depth and atmosphere
-    scene.fog = new THREE.FogExp2(0x080810, 0.35);
-
-    // Ground plane — subtle reflective surface below the wasp
-    const groundGeo = new THREE.PlaneGeometry(20, 20);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x0a0a0f,
-      roughness: 0.85,
-      metalness: 0.1,
-    });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.6;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // Dust particles — layered system
-    const PARTICLE_COUNT = 500;
-    const particleGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(PARTICLE_COUNT * 3);
-    const velocities = new Float32Array(PARTICLE_COUNT * 3);
-    const sizes = new Float32Array(PARTICLE_COUNT);
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 4;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 3;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 4;
-      velocities[i * 3] = (Math.random() - 0.5) * 0.001;
-      velocities[i * 3 + 1] = Math.random() * 0.0008 + 0.0002;
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.001;
-      sizes[i] = Math.random() * 0.015 + 0.003;
+    const PC = 300;
+    const pGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(PC * 3);
+    const pVel = new Float32Array(PC * 3);
+    for (let i = 0; i < PC; i++) {
+      pPos[i*3]   = (Math.random()-0.5) * 5;
+      pPos[i*3+1] = (Math.random()-0.5) * 3;
+      pPos[i*3+2] = (Math.random()-0.5) * 5;
+      pVel[i*3]   = (Math.random()-0.5) * 0.0008;
+      pVel[i*3+1] = Math.random() * 0.0005 + 0.0001;
+      pVel[i*3+2] = (Math.random()-0.5) * 0.0008;
     }
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particleGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({
+      color: 0xB8964E, size: 0.006, transparent: true, opacity: 0.25,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+    })));
 
-    const particleMat = new THREE.PointsMaterial({
-      color: 0xB8964E,
-      size: 0.012,
-      transparent: true,
-      opacity: 0.3,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      sizeAttenuation: true,
-    });
-    const particles = new THREE.Points(particleGeo, particleMat);
-    scene.add(particles);
-
-    // Secondary particle layer — larger, slower, more atmospheric
-    const MOTE_COUNT = 80;
-    const moteGeo = new THREE.BufferGeometry();
-    const motePositions = new Float32Array(MOTE_COUNT * 3);
-    const moteVelocities = new Float32Array(MOTE_COUNT * 3);
-    for (let i = 0; i < MOTE_COUNT; i++) {
-      motePositions[i * 3] = (Math.random() - 0.5) * 5;
-      motePositions[i * 3 + 1] = (Math.random() - 0.5) * 3;
-      motePositions[i * 3 + 2] = (Math.random() - 0.5) * 5;
-      moteVelocities[i * 3] = (Math.random() - 0.5) * 0.0005;
-      moteVelocities[i * 3 + 1] = Math.random() * 0.0003;
-      moteVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.0005;
-    }
-    moteGeo.setAttribute('position', new THREE.BufferAttribute(motePositions, 3));
-    const moteMat = new THREE.PointsMaterial({
-      color: 0xFFEEDD,
-      size: 0.025,
-      transparent: true,
-      opacity: 0.12,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      sizeAttenuation: true,
-    });
-    const motes = new THREE.Points(moteGeo, moteMat);
-    scene.add(motes);
-
-    function updateParticles(elapsed) {
-      // Dust
-      const pos = particleGeo.attributes.position.array;
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        pos[i * 3] += velocities[i * 3] + Math.sin(elapsed + i) * 0.00005;
-        pos[i * 3 + 1] += velocities[i * 3 + 1];
-        pos[i * 3 + 2] += velocities[i * 3 + 2] + Math.cos(elapsed + i) * 0.00005;
-        if (Math.abs(pos[i * 3]) > 2) pos[i * 3] *= -0.95;
-        if (pos[i * 3 + 1] > 1.5) pos[i * 3 + 1] = -1.5;
-        if (Math.abs(pos[i * 3 + 2]) > 2) pos[i * 3 + 2] *= -0.95;
-      }
-      particleGeo.attributes.position.needsUpdate = true;
-
-      // Motes
-      const mp = moteGeo.attributes.position.array;
-      for (let i = 0; i < MOTE_COUNT; i++) {
-        mp[i * 3] += moteVelocities[i * 3] + Math.sin(elapsed * 0.3 + i * 0.5) * 0.0001;
-        mp[i * 3 + 1] += moteVelocities[i * 3 + 1];
-        mp[i * 3 + 2] += moteVelocities[i * 3 + 2];
-        if (Math.abs(mp[i * 3]) > 2.5) mp[i * 3] *= -0.9;
-        if (mp[i * 3 + 1] > 1.5) mp[i * 3 + 1] = -1.5;
-        if (Math.abs(mp[i * 3 + 2]) > 2.5) mp[i * 3 + 2] *= -0.9;
-      }
-      moteGeo.attributes.position.needsUpdate = true;
-    }
 
     // ════════════════════════════════════════════════════════════════
     // STATE
     // ════════════════════════════════════════════════════════════════
     let waspModel = null;
-    let waspPivot = null; // Container for procedural animation
+    let waspPivot = null;
     const clock = new THREE.Clock();
-    const mouse = new THREE.Vector2(0, 0);
+    const mouse = { x: 0, y: 0 };
     const raycaster = new THREE.Raycaster();
-
-    // Animation state
-    let animState = 'idle'; // idle, agitated, attack
-    const animParams = { bobSpeed: 1, bobAmount: 0.015, rockSpeed: 0.7, rockAmount: 0.02 };
-
-    // Scroll proxy — camera orbits, wasp stays still
-    const scrollProxy = { progress: 0 };
-
-    // Camera path — spline orbit around the wasp
-    const cameraPath = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.15, 0.05, 1.6),    // Hero — front, slightly right
-      new THREE.Vector3(0.5, 0.1, 1.3),       // Thorax — right side
-      new THREE.Vector3(0.3, -0.05, 1.0),     // Petiole — closer, lower
-      new THREE.Vector3(-0.3, 0.0, 1.2),      // Stinger — left side
-      new THREE.Vector3(-0.15, 0.2, 1.0),     // Eyes — face on, close
-      new THREE.Vector3(0.0, 0.5, 1.4),       // Wings — above
-      new THREE.Vector3(0.15, 0.05, 1.6),     // Return to start
-    ], false, 'catmullrom', 0.5);
+    const mouseVec = new THREE.Vector2();
+    let animState = 'idle';
+    let lastJerk = 0, jerkX = 0, jerkY = 0;
 
     const labelEl = document.getElementById('label');
     const labelNameEl = labelEl.querySelector('.label-name');
     const labelFactEl = labelEl.querySelector('.label-fact');
 
+
     // ════════════════════════════════════════════════════════════════
     // LOAD MODEL
     // ════════════════════════════════════════════════════════════════
-    const loader = new GLTFLoader();
-    loader.load('./wasp.glb', (gltf) => {
-      // Wrap model in a pivot for procedural animation
+    new GLTFLoader().load('./wasp.glb', (gltf) => {
       waspPivot = new THREE.Group();
       waspModel = gltf.scene;
 
-      // Center the model
       const box = new THREE.Box3().setFromObject(waspModel);
       const center = box.getCenter(new THREE.Vector3());
       waspModel.position.sub(center);
 
-      // Scale to DOMINATE the viewport
       const size = box.getSize(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = 2.0 / maxDim;
+      const scale = 2.2 / Math.max(size.x, size.y, size.z);
       waspModel.scale.setScalar(scale);
 
       waspPivot.add(waspModel);
       scene.add(waspPivot);
 
-      // Log mesh names for debugging
-      waspModel.traverse(child => {
-        if (child.isMesh) {
-          console.log('Mesh:', child.name, child.geometry.attributes.position.count, 'verts');
-          // Enable shadows
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-
-      // Dismiss loading
+      // Reveal UI
       document.getElementById('loading').classList.add('fade-out');
       setTimeout(() => {
         document.getElementById('loading').style.display = 'none';
+        document.getElementById('title').classList.add('visible');
         document.getElementById('controls').classList.add('visible');
-        initScrollAnimations();
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.add('visible'));
       }, 1000);
-
-    }, (progress) => {
-      if (progress.total > 0) {
-        const pct = (progress.loaded / progress.total * 100).toFixed(0);
-        console.log(`Loading: ${pct}%`);
-      }
-    }, (err) => console.error('Load failed:', err));
-
-
-    // ════════════════════════════════════════════════════════════════
-    // PROCEDURAL ANIMATION — realistic hovering insect
-    // ════════════════════════════════════════════════════════════════
-    // A real hovering wasp:
-    // - Constant micro-vibration from 200Hz wingbeat transferring to body
-    // - Slow breathing bob (abdomen expansion cycle)
-    // - Slight forward lean (flight posture, not level)
-    // - Lateral drift (never perfectly stationary)
-    // - Occasional micro-corrections (small jerks)
-    // - Legs dangle with subtle pendulum sway
-
-    let lastJerk = 0;
-    let jerkX = 0, jerkY = 0;
-
-    function updateProceduralAnimation(elapsed) {
-      if (!waspPivot) return;
-
-      // ── Wing vibration transfer (high frequency, tiny amplitude)
-      const vibX = (Math.sin(elapsed * 47) + Math.sin(elapsed * 53)) * 0.0008;
-      const vibY = (Math.sin(elapsed * 41) + Math.cos(elapsed * 59)) * 0.0006;
-      const vibZ = Math.sin(elapsed * 43) * 0.0004;
-
-      // ── Breathing bob (slow, organic)
-      const breathe = Math.sin(elapsed * 1.2) * 0.006 + Math.sin(elapsed * 0.7) * 0.003;
-
-      // ── Lateral drift (very slow, figure-8 pattern)
-      const driftX = Math.sin(elapsed * 0.3) * 0.008 + Math.sin(elapsed * 0.17) * 0.004;
-      const driftZ = Math.cos(elapsed * 0.25) * 0.005;
-
-      // ── Micro-corrections (random small jerks every 2-4 seconds)
-      if (elapsed - lastJerk > 2 + Math.random() * 2) {
-        lastJerk = elapsed;
-        jerkX = (Math.random() - 0.5) * 0.006;
-        jerkY = (Math.random() - 0.5) * 0.004;
-      }
-      // Decay jerks
-      jerkX *= 0.95;
-      jerkY *= 0.95;
-
-      // ── State intensity multiplier
-      let intensity = 1.0;
-      let extraVib = 0;
-      let lunge = 0;
-
-      if (animState === 'agitated') {
-        intensity = 2.5;
-        extraVib = Math.sin(elapsed * 31) * 0.003;
-      } else if (animState === 'attack') {
-        intensity = 1.5;
-        const t = (elapsed % 2.5) / 2.5;
-        if (t < 0.15) {
-          lunge = Math.sin(t / 0.15 * Math.PI) * -0.04; // Sharp forward thrust
-        } else if (t < 0.25) {
-          lunge = -0.04 * (1 - (t - 0.15) / 0.1); // Snap back
-        }
-        extraVib = Math.sin(elapsed * 37) * 0.002;
-      }
-
-      // ── Apply to pivot
-      waspPivot.position.x = (driftX + vibX + jerkX + lunge) * intensity;
-      waspPivot.position.y = (breathe + vibY + jerkY) * intensity;
-      waspPivot.position.z = (driftZ + vibZ) * intensity + extraVib;
-
-      // ── Body attitude (slight forward lean + banking into drift)
-      waspPivot.rotation.x = -0.08 + vibY * 2; // Forward lean
-      waspPivot.rotation.z = -driftX * 0.8 * intensity; // Bank into drift direction
-      waspPivot.rotation.y = driftX * 0.3; // Yaw slightly into drift
-    }
-
-
-    // ════════════════════════════════════════════════════════════════
-    // SCROLL — camera orbits on spline, wasp stays still
-    // ════════════════════════════════════════════════════════════════
-    function initScrollAnimations() {
-      // Master scroll — one progress value drives everything
-      ScrollTrigger.create({
-        trigger: '#scroll-container',
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 1.5,
-        onUpdate: (self) => {
-          scrollProxy.progress = self.progress;
-          document.getElementById('progress').style.width = `${self.progress * 100}%`;
-        }
-      });
-
-      // Section content reveals
-      document.querySelectorAll('.section-content').forEach(el => {
-        gsap.fromTo(el,
-          { opacity: 0, y: 40 },
-          { opacity: 1, y: 0,
-            scrollTrigger: {
-              trigger: el.closest('.section'),
-              start: 'top 70%',
-              end: 'top 30%',
-              scrub: 1,
-            }
-          }
-        );
-      });
-
-      document.querySelectorAll('.section-number').forEach(num => {
-        gsap.fromTo(num,
-          { opacity: 0 },
-          { opacity: 0.5,
-            scrollTrigger: {
-              trigger: num.closest('.section'),
-              start: 'top 75%',
-              end: 'top 45%',
-              scrub: 0.5,
-            }
-          }
-        );
-      });
-    }
-
-
-    // ════════════════════════════════════════════════════════════════
-    // STATE SWITCHING
-    // ════════════════════════════════════════════════════════════════
-    function switchState(stateName) {
-      const stateMap = { 'Idle': 'idle', 'Agitated': 'agitated', 'Attack': 'attack' };
-      animState = stateMap[stateName] || 'idle';
-
-      // Animate params for smooth transitions
-      if (animState === 'idle') {
-        gsap.to(animParams, { bobSpeed: 1, bobAmount: 0.015, rockSpeed: 0.7, rockAmount: 0.02, duration: 0.5 });
-      } else if (animState === 'agitated') {
-        gsap.to(animParams, { bobSpeed: 3, bobAmount: 0.03, rockSpeed: 2, rockAmount: 0.05, duration: 0.3 });
-      }
-
-      document.querySelectorAll('.state-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.state === stateName);
-      });
-    }
-
-    document.querySelectorAll('.state-btn').forEach(btn => {
-      btn.addEventListener('click', () => switchState(btn.dataset.state));
     });
 
 
     // ════════════════════════════════════════════════════════════════
-    // MOUSE TRACKING
+    // MOUSE — subtle camera orbit
     // ════════════════════════════════════════════════════════════════
+    const camBase = { x: 0, y: 0.05, z: 1.8 };
+    const camTarget = { x: 0, y: 0.05, z: 1.8 };
+
     window.addEventListener('mousemove', (e) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      // Mouse drives subtle camera orbit
+      camTarget.x = camBase.x + mouse.x * 0.15;
+      camTarget.y = camBase.y + mouse.y * 0.08;
+
+      // Raycaster for labels
+      mouseVec.set(mouse.x, mouse.y);
     });
 
 
     // ════════════════════════════════════════════════════════════════
-    // HOTSPOT LABELS — generic for any mesh name
+    // HOTSPOT LABELS
     // ════════════════════════════════════════════════════════════════
-    const genericLabel = { name: 'VESPA ORIENTALIS', fact: 'The oriental hornet. Solar-powered predator.' };
-    let currentLabelName = null;
+    const labelData = {
+      name: 'VESPA ORIENTALIS',
+      fact: 'The oriental hornet. Solar-powered predator with a cuticle that harvests sunlight.'
+    };
+    let labelVisible = false;
 
     function updateLabels() {
       if (!waspModel) return;
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(waspModel, true);
+      raycaster.setFromCamera(mouseVec, camera);
+      const hits = raycaster.intersectObject(waspModel, true);
 
-      if (intersects.length > 0) {
-        const data = genericLabel;
-        if (data.name !== currentLabelName) {
-          labelNameEl.textContent = data.name;
-          labelFactEl.textContent = data.fact;
-          currentLabelName = data.name;
-        }
-        const pt = intersects[0].point.clone().project(camera);
-        const x = (pt.x * 0.5 + 0.5) * window.innerWidth;
-        const y = (-pt.y * 0.5 + 0.5) * window.innerHeight;
-        labelEl.style.left = `${Math.min(x + 20, window.innerWidth - 320)}px`;
-        labelEl.style.top = `${Math.max(y - 70, 20)}px`;
-        labelEl.classList.add('visible');
+      if (hits.length > 0) {
+        const pt = hits[0].point.clone().project(camera);
+        const sx = (pt.x * 0.5 + 0.5) * window.innerWidth;
+        const sy = (-pt.y * 0.5 + 0.5) * window.innerHeight;
+
+        labelNameEl.textContent = labelData.name;
+        labelFactEl.textContent = labelData.fact;
+        labelEl.style.left = `${Math.min(sx + 20, window.innerWidth - 300)}px`;
+        labelEl.style.top = `${Math.max(sy - 60, 20)}px`;
+        if (!labelVisible) { labelEl.classList.add('visible'); labelVisible = true; }
         document.body.style.cursor = 'pointer';
-        return;
+      } else {
+        if (labelVisible) { labelEl.classList.remove('visible'); labelVisible = false; }
+        document.body.style.cursor = 'default';
       }
-      labelEl.classList.remove('visible');
-      currentLabelName = null;
-      document.body.style.cursor = 'crosshair';
+    }
+
+
+    // ════════════════════════════════════════════════════════════════
+    // STATE BUTTONS
+    // ════════════════════════════════════════════════════════════════
+    document.querySelectorAll('.state-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        animState = btn.dataset.state;
+        document.querySelectorAll('.state-btn').forEach(b =>
+          b.classList.toggle('active', b === btn)
+        );
+      });
+    });
+
+
+    // ════════════════════════════════════════════════════════════════
+    // ANIMATION — three distinct behaviors
+    // ════════════════════════════════════════════════════════════════
+
+    function updateAnimation(t) {
+      if (!waspPivot) return;
+
+      if (animState === 'idle') {
+        // IDLE: perched/resting. Barely moves. Occasional tiny shift.
+        const breathe = Math.sin(t * 0.8) * 0.002;
+        waspPivot.position.y = breathe;
+        waspPivot.position.x = Math.sin(t * 0.2) * 0.001;
+        waspPivot.rotation.x = -0.02;
+        waspPivot.rotation.z = 0;
+        waspPivot.rotation.y = 0;
+
+      } else if (animState === 'hover') {
+        // HOVER: airborne, smooth figure-8 drift, body tilted forward
+        const driftX = Math.sin(t * 0.4) * 0.06;
+        const driftY = Math.sin(t * 0.6) * 0.02 + Math.sin(t * 1.1) * 0.008;
+        const driftZ = Math.cos(t * 0.35) * 0.03;
+
+        waspPivot.position.x = driftX;
+        waspPivot.position.y = driftY;
+        waspPivot.position.z = driftZ;
+
+        // Bank into the drift direction (body tilts the way it's moving)
+        waspPivot.rotation.z = -Math.cos(t * 0.4) * 0.4 * 0.08;
+        waspPivot.rotation.x = -0.12; // Forward lean — flight posture
+        waspPivot.rotation.y = Math.cos(t * 0.4) * 0.04; // Slight yaw into drift
+
+      } else if (animState === 'fly') {
+        // FLY: fast orbiting flight path, banking turns, speed
+        const radius = 0.15;
+        const speed = 0.7;
+        const flightX = Math.sin(t * speed) * radius;
+        const flightZ = Math.cos(t * speed) * radius * 0.6;
+        const flightY = Math.sin(t * speed * 2) * 0.03; // Altitude changes
+
+        waspPivot.position.x = flightX;
+        waspPivot.position.y = flightY;
+        waspPivot.position.z = flightZ;
+
+        // Bank hard into turns — this is what makes it look like real flight
+        const bankAngle = -Math.cos(t * speed) * 0.25;
+        const pitch = -0.18; // Nose down in flight
+        const yaw = -Math.cos(t * speed) * 0.15; // Face direction of travel
+
+        waspPivot.rotation.x = pitch;
+        waspPivot.rotation.z = bankAngle;
+        waspPivot.rotation.y = yaw;
+      }
     }
 
 
@@ -781,25 +436,28 @@
     // ════════════════════════════════════════════════════════════════
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      const elapsed = clock.getElapsedTime();
+      const t = clock.getElapsedTime();
 
-      // Procedural animation
-      updateProceduralAnimation(elapsed);
+      updateAnimation(t);
 
-      // Camera follows spline path based on scroll progress
-      const camPos = cameraPath.getPointAt(scrollProxy.progress);
-      camera.position.x = camPos.x + Math.sin(elapsed * 0.2) * 0.005 + mouse.x * 0.02;
-      camera.position.y = camPos.y + Math.cos(elapsed * 0.15) * 0.004;
-      camera.position.z = camPos.z;
+      // Smooth camera follow
+      camera.position.x += (camTarget.x - camera.position.x) * 0.04;
+      camera.position.y += (camTarget.y - camera.position.y) * 0.04;
       camera.lookAt(0, 0, 0);
 
       // Particles
-      updateParticles(elapsed);
+      const pp = pGeo.attributes.position.array;
+      for (let i = 0; i < PC; i++) {
+        pp[i*3]   += pVel[i*3] + Math.sin(t+i)*0.00003;
+        pp[i*3+1] += pVel[i*3+1];
+        pp[i*3+2] += pVel[i*3+2];
+        if (Math.abs(pp[i*3]) > 2.5) pp[i*3] *= -0.9;
+        if (pp[i*3+1] > 1.5) pp[i*3+1] = -1.5;
+        if (Math.abs(pp[i*3+2]) > 2.5) pp[i*3+2] *= -0.9;
+      }
+      pGeo.attributes.position.needsUpdate = true;
 
-      // Labels
       updateLabels();
-
       renderer.render(scene, camera);
     }
     animate();
