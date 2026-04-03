@@ -1,18 +1,26 @@
-"""Wasp appendages: wings, legs, antennae, stinger."""
+"""Wasp appendages: wings, legs, antennae, stinger.
+V2 — larger wings, better leg articulation, more visible appendages.
+"""
 
 import bpy
 import math
 
 
+def smooth_and_subdiv(obj, levels=2):
+    bpy.ops.object.shade_smooth()
+    mod = obj.modifiers.new(name="Subsurf", type="SUBSURF")
+    mod.levels = levels
+    mod.render_levels = levels
+
+
 # ── WINGS ─────────────────────────────────────────────────────────────
-# 4 wings: 2 forewings (larger), 2 hindwings (smaller)
-# Wasps have narrow, elongated wings compared to bees
+# Larger, more visible. Wasps have long narrow wings that extend past the body.
 wing_specs = [
     # (name, location, scale, rotation_degrees)
-    ("Wing_Fore_L", (0.18, 0.08, 0.16), (0.85, 0.18, 0.015), (8, 5, 15)),
-    ("Wing_Fore_R", (0.18, -0.08, 0.16), (0.85, 0.18, 0.015), (8, -5, -15)),
-    ("Wing_Hind_L", (0.06, 0.07, 0.15), (0.55, 0.13, 0.012), (8, 8, 18)),
-    ("Wing_Hind_R", (0.06, -0.07, 0.15), (0.55, 0.13, 0.012), (8, -8, -18)),
+    ("Wing_Fore_L", (0.12, 0.06, 0.14),  (0.45, 0.12, 0.008), (5, 3, 20)),
+    ("Wing_Fore_R", (0.12, -0.06, 0.14), (0.45, 0.12, 0.008), (5, -3, -20)),
+    ("Wing_Hind_L", (0.04, 0.05, 0.13),  (0.3, 0.09, 0.006),  (5, 5, 24)),
+    ("Wing_Hind_R", (0.04, -0.05, 0.13), (0.3, 0.09, 0.006),  (5, -5, -24)),
 ]
 
 for name, loc, scale, rot_deg in wing_specs:
@@ -20,106 +28,83 @@ for name, loc, scale, rot_deg in wing_specs:
     wing = bpy.context.active_object
     wing.name = name
     wing.scale = scale
-    wing.rotation_euler = (
-        math.radians(rot_deg[0]),
-        math.radians(rot_deg[1]),
-        math.radians(rot_deg[2]),
-    )
-    # Subdivide for smoother shape
-    mod = wing.modifiers.new(name="Subsurf", type="SUBSURF")
-    mod.levels = 2
-    mod.render_levels = 2
-    bpy.ops.object.shade_smooth()
+    wing.rotation_euler = tuple(math.radians(r) for r in rot_deg)
+    smooth_and_subdiv(wing)
 
 
 # ── LEGS ──────────────────────────────────────────────────────────────
-# 6 legs in 3 pairs, each with femur + tibia segments
-# Wasps have longer, dangling legs compared to bees
+# 6 legs, 3 pairs. Wasps have notably long, dangling legs.
 leg_configs = [
-    # (position_name, side, origin, femur_rot_deg, tibia_offset, tibia_rot_deg)
-    ("Fore", "L", (0.28, 0.12, -0.08), (25, 0, 35), (0.1, -0.13), ((-15, 0, 20))),
-    ("Fore", "R", (0.28, -0.12, -0.08), (25, 0, -35), (-0.1, -0.13), ((-15, 0, -20))),
-    ("Mid", "L", (0.15, 0.14, -0.1), (20, 0, 40), (0.12, -0.15), ((-10, 0, 18))),
-    ("Mid", "R", (0.15, -0.14, -0.1), (20, 0, -40), (-0.12, -0.15), ((-10, 0, -18))),
-    ("Hind", "L", (0.02, 0.13, -0.09), (15, 0, 45), (0.13, -0.18), ((-8, 0, 15))),
-    ("Hind", "R", (0.02, -0.13, -0.09), (15, 0, -45), (-0.13, -0.18), ((-8, 0, -15))),
+    # (pos, side, femur_loc, femur_rot, tibia_offset, tibia_rot)
+    ("Fore", "L",  (0.22, 0.1, -0.06),   (30, 0, 40),   (0.06, 0.06, -0.14),  (-20, 0, 20)),
+    ("Fore", "R",  (0.22, -0.1, -0.06),  (30, 0, -40),  (0.06, -0.06, -0.14), (-20, 0, -20)),
+    ("Mid",  "L",  (0.12, 0.12, -0.08),  (25, 0, 45),   (0.06, 0.08, -0.16),  (-15, 0, 18)),
+    ("Mid",  "R",  (0.12, -0.12, -0.08), (25, 0, -45),  (0.06, -0.08, -0.16), (-15, 0, -18)),
+    ("Hind", "L",  (0.02, 0.11, -0.07),  (20, 0, 50),   (0.05, 0.1, -0.18),   (-10, 0, 15)),
+    ("Hind", "R",  (0.02, -0.11, -0.07), (20, 0, -50),  (0.05, -0.1, -0.18),  (-10, 0, -15)),
 ]
 
-for pos, side, origin, fem_rot, tib_off, tib_rot in leg_configs:
+for pos, side, fem_loc, fem_rot, tib_off, tib_rot in leg_configs:
     # Femur
     bpy.ops.mesh.primitive_cylinder_add(
-        radius=0.012, depth=0.2, vertices=8, location=origin
+        radius=0.009, depth=0.16, vertices=8, location=fem_loc
     )
     femur = bpy.context.active_object
     femur.name = f"Leg_{pos}_{side}_Femur"
-    femur.rotation_euler = (
-        math.radians(fem_rot[0]),
-        math.radians(fem_rot[1]),
-        math.radians(fem_rot[2]),
-    )
+    femur.rotation_euler = tuple(math.radians(r) for r in fem_rot)
     bpy.ops.object.shade_smooth()
 
-    # Tibia
+    # Tibia (offset from femur)
     tibia_loc = (
-        origin[0] + tib_off[0],
-        origin[1] + (0.08 if side == "L" else -0.08),
-        origin[2] + tib_off[1],
+        fem_loc[0] + tib_off[0],
+        fem_loc[1] + tib_off[1],
+        fem_loc[2] + tib_off[2],
     )
     bpy.ops.mesh.primitive_cylinder_add(
-        radius=0.008, depth=0.22, vertices=8, location=tibia_loc
+        radius=0.006, depth=0.2, vertices=8, location=tibia_loc
     )
     tibia = bpy.context.active_object
     tibia.name = f"Leg_{pos}_{side}_Tibia"
-    tibia.rotation_euler = (
-        math.radians(tib_rot[0]),
-        math.radians(tib_rot[1]),
-        math.radians(tib_rot[2]),
-    )
+    tibia.rotation_euler = tuple(math.radians(r) for r in tib_rot)
     bpy.ops.object.shade_smooth()
 
 
 # ── ANTENNAE ──────────────────────────────────────────────────────────
-# Two segmented antennae — wasps have longer, more angular antennae than bees
-for side, y_off in [("L", 0.04), ("R", -0.04)]:
-    # Scape (base segment — thicker, shorter)
+# Wasp antennae: elbowed, segmented, longer than bee antennae
+for side, y_off in [("L", 0.035), ("R", -0.035)]:
+    sign = 1 if side == "L" else -1
+
+    # Scape (base — thicker, angled)
     bpy.ops.mesh.primitive_cylinder_add(
-        radius=0.012, depth=0.1, vertices=8,
-        location=(0.62, y_off, 0.15)
+        radius=0.009, depth=0.08, vertices=8,
+        location=(0.48, y_off, 0.1)
     )
     scape = bpy.context.active_object
     scape.name = f"Antenna_{side}_Scape"
-    scape.rotation_euler = (
-        math.radians(-35),
-        0,
-        math.radians(12 if side == "L" else -12),
-    )
+    scape.rotation_euler = (math.radians(-40), 0, math.radians(10 * sign))
     bpy.ops.object.shade_smooth()
 
-    # Flagellum (long whip — thinner, longer)
+    # Flagellum (long whip — thinner)
     bpy.ops.mesh.primitive_cylinder_add(
-        radius=0.006, depth=0.22, vertices=8,
-        location=(0.67, y_off * 1.6, 0.26)
+        radius=0.005, depth=0.18, vertices=8,
+        location=(0.52, y_off * 1.8, 0.18)
     )
     flag = bpy.context.active_object
     flag.name = f"Antenna_{side}_Flagellum"
-    flag.rotation_euler = (
-        math.radians(-55),
-        0,
-        math.radians(18 if side == "L" else -18),
-    )
+    flag.rotation_euler = (math.radians(-55), 0, math.radians(15 * sign))
     bpy.ops.object.shade_smooth()
 
 
 # ── STINGER ───────────────────────────────────────────────────────────
-# Sharp, smooth ovipositor — the weapon
+# Sharp, smooth, the weapon. Prominent.
 bpy.ops.mesh.primitive_cone_add(
-    radius1=0.022, radius2=0.001, depth=0.14, vertices=8,
-    location=(-0.8, 0, -0.04)
+    radius1=0.018, radius2=0.001, depth=0.1, vertices=12,
+    location=(-0.6, 0, -0.02)
 )
 stinger = bpy.context.active_object
 stinger.name = "Stinger"
-stinger.rotation_euler = (0, math.radians(95), 0)
-bpy.ops.object.shade_smooth()
+stinger.rotation_euler = (0, math.radians(92), 0)
+smooth_and_subdiv(stinger, 1)
 
 
-print("02_wasp_appendages.py complete — Wings, Legs, Antennae, Stinger created")
+print("02_wasp_appendages.py complete — Wings, Legs, Antennae, Stinger")

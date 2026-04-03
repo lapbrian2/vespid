@@ -19,129 +19,220 @@
       font-weight: 500;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: auto;
+    }
 
     body {
       background: #09090B;
       color: #F5F5F0;
-      overflow: hidden;
       font-family: 'Geist', sans-serif;
       cursor: crosshair;
+      overscroll-behavior: none;
     }
 
-    /* ── Loading Screen ─────────────────────────────── */
+    /* ── Loading ─────────────────────────────────────── */
     #loading {
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      z-index: 100; background: #09090B;
-      transition: opacity 0.8s ease;
+      z-index: 200; background: #09090B;
+      transition: opacity 1s ease;
     }
     #loading.fade-out { opacity: 0; pointer-events: none; }
-    #loading .title {
-      font-family: 'Geist', sans-serif; font-weight: 500;
-      font-size: 14px; letter-spacing: 0.3em;
-      text-transform: uppercase; color: #F5F5F0;
+    .loading-title {
+      font-weight: 500; font-size: 14px;
+      letter-spacing: 0.3em; text-transform: uppercase;
     }
-    #loading .subtitle {
+    .loading-sub {
       font-family: 'Geist Mono', monospace;
       font-size: 12px; color: #71717A; margin-top: 8px;
     }
-    #loading hr {
-      width: 120px; border: none;
-      border-top: 1px solid #71717A; margin: 12px 0;
+    .loading-bar {
+      width: 120px; height: 1px; background: #333;
+      margin: 16px 0; position: relative; overflow: hidden;
+    }
+    .loading-bar::after {
+      content: ''; position: absolute; inset: 0;
+      background: #F5F5F0;
+      animation: loadSlide 1.5s ease infinite;
+    }
+    @keyframes loadSlide {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
 
-    /* ── Canvas ──────────────────────────────────────── */
-    canvas { display: block; }
-
-    /* ── Title Overlay ───────────────────────────────── */
-    #title {
-      position: fixed; top: 32px; left: 32px; z-index: 10;
-      opacity: 0; transform: translateY(-10px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
+    /* ── Canvas (fixed background) ───────────────────── */
+    #three-canvas {
+      position: fixed; inset: 0; z-index: 0;
     }
-    #title.visible { opacity: 1; transform: translateY(0); }
-    .title-number, .title-name {
+
+    /* ── Scroll container ────────────────────────────── */
+    #scroll-container {
+      position: relative; z-index: 1;
+      pointer-events: none;
+    }
+    #scroll-container > section {
+      pointer-events: auto;
+    }
+
+    /* ── Sections ────────────────────────────────────── */
+    .section {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      position: relative;
+      padding: 0 clamp(32px, 6vw, 120px);
+    }
+
+    .section-hero {
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+
+    .section-content {
+      max-width: 440px;
+    }
+    .section-content.right {
+      margin-left: auto;
+    }
+
+    .section-overline {
+      font-weight: 500; font-size: 10px;
+      letter-spacing: 0.35em; text-transform: uppercase;
+      color: #B8964E; margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300; font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.15; letter-spacing: -0.02em;
+      color: #F5F5F0; margin-bottom: 16px;
+    }
+
+    .section-body {
+      font-weight: 400; font-size: 15px;
+      line-height: 1.7; color: #A1A1AA;
+      max-width: 380px;
+    }
+
+    .section-number {
       font-family: 'Geist Mono', monospace;
-      font-size: 12px; color: #71717A; letter-spacing: 0.1em;
+      font-size: 11px; color: #71717A;
+      letter-spacing: 0.1em;
+      position: absolute; top: 40px; left: clamp(32px, 6vw, 120px);
     }
-    .title-name { margin-left: 8px; }
-    .title-species {
+
+    /* ── Hero Title ──────────────────────────────────── */
+    .hero-content {
+      padding-top: 30vh;
+    }
+    .hero-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 12px; color: #71717A;
+      letter-spacing: 0.1em; margin-bottom: 16px;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300; font-size: clamp(48px, 8vw, 96px);
+      line-height: 1.05; letter-spacing: -0.03em;
+      color: #F5F5F0;
+    }
+    .hero-species {
       font-family: 'Cormorant Garamond', serif;
       font-weight: 300; font-style: italic;
-      font-size: 16px; color: #71717A; margin-top: 4px;
+      font-size: clamp(18px, 2.5vw, 28px);
+      color: #71717A; margin-top: 12px;
+    }
+    .hero-scroll {
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px; color: #52525B;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      position: absolute; bottom: 40px;
+      left: 50%; transform: translateX(-50%);
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
     }
 
-    /* ── State Buttons ───────────────────────────────── */
+    /* ── State Controls ──────────────────────────────── */
     #controls {
-      position: fixed; bottom: 40px; left: 50%;
+      position: fixed; bottom: 32px; left: 50%;
       transform: translateX(-50%);
-      display: flex; gap: 32px; z-index: 10;
-      opacity: 0; transform: translateX(-50%) translateY(10px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
+      display: flex; gap: 28px; z-index: 10;
+      opacity: 0; transition: opacity 0.6s ease;
     }
-    #controls.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #controls.visible { opacity: 1; }
     .state-btn {
       font-family: 'Geist Mono', monospace;
-      font-size: 11px; letter-spacing: 0.15em;
-      text-transform: uppercase; color: #71717A;
+      font-size: 10px; letter-spacing: 0.15em;
+      text-transform: uppercase; color: #52525B;
       background: none; border: none; cursor: pointer;
       padding: 4px 0;
       border-bottom: 1px solid transparent;
       transition: color 0.3s, border-color 0.3s;
     }
     .state-btn:hover { color: #F5F5F0; }
-    .state-btn.active {
-      color: #F5F5F0;
-      border-bottom-color: #B8964E;
-    }
+    .state-btn.active { color: #F5F5F0; border-bottom-color: #B8964E; }
 
-    /* ── Hotspot Labels ──────────────────────────────── */
+    /* ── Hotspot Label ───────────────────────────────── */
     #label-container {
       position: fixed; inset: 0;
       pointer-events: none; z-index: 5;
     }
     #label {
-      position: absolute;
-      opacity: 0;
-      transition: opacity 0.25s ease;
+      position: absolute; opacity: 0;
+      transition: opacity 0.2s ease;
     }
     #label.visible { opacity: 1; }
     .label-line {
-      width: 1px; height: 40px;
-      background: #71717A; margin-bottom: 8px;
+      width: 1px; height: 32px;
+      background: #71717A; margin-bottom: 6px;
     }
     .label-name {
-      font-family: 'Geist', sans-serif; font-weight: 500;
-      font-size: 11px; letter-spacing: 0.3em;
-      text-transform: uppercase; color: #B8964E;
-      margin-bottom: 4px;
+      font-weight: 500; font-size: 10px;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: #B8964E; margin-bottom: 3px;
     }
     .label-fact {
-      font-family: 'Geist', sans-serif; font-weight: 400;
-      font-size: 13px; color: #F5F5F0;
-      max-width: 300px; line-height: 1.5;
+      font-weight: 400; font-size: 13px;
+      color: #F5F5F0; max-width: 280px; line-height: 1.5;
+    }
+
+    /* ── Scroll progress ─────────────────────────────── */
+    #progress {
+      position: fixed; top: 0; left: 0;
+      width: 0; height: 1px;
+      background: #B8964E; z-index: 100;
+      transition: width 0.1s linear;
+    }
+
+    /* ── Section reveal animations ────────────────────── */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.visible {
+      opacity: 1; transform: translateY(0);
     }
   </style>
 </head>
 <body>
 
-  <!-- Loading Screen -->
+  <!-- Progress bar -->
+  <div id="progress"></div>
+
+  <!-- Loading -->
   <div id="loading">
-    <div class="title">LOADING</div>
-    <hr>
-    <div class="subtitle">[01] VESPID</div>
+    <div class="loading-title">LOADING</div>
+    <div class="loading-bar"></div>
+    <div class="loading-sub">[01] VESPID</div>
   </div>
 
-  <!-- Title -->
-  <div id="title">
-    <span class="title-number">[01]</span>
-    <span class="title-name">VESPID</span>
-    <div class="title-species">Vespula vulgaris</div>
-  </div>
-
-  <!-- State Controls -->
+  <!-- Controls -->
   <div id="controls">
     <button class="state-btn active" data-state="Idle">Idle</button>
     <button class="state-btn" data-state="Agitated">Agitated</button>
@@ -158,12 +249,103 @@
   </div>
 
   <!-- Three.js Canvas -->
-  <div id="app"></div>
+  <div id="three-canvas"></div>
 
-  <!-- GSAP -->
+  <!-- Scroll Sections -->
+  <div id="scroll-container">
+
+    <!-- Hero -->
+    <section class="section section-hero">
+      <div class="hero-content reveal">
+        <div class="hero-label">[01] VESPID</div>
+        <h1 class="hero-title">Vespid</h1>
+        <p class="hero-species">Vespula vulgaris</p>
+      </div>
+      <div class="hero-scroll">Scroll</div>
+    </section>
+
+    <!-- Anatomy: Thorax -->
+    <section class="section" data-camera-target="thorax">
+      <span class="section-number">[02]</span>
+      <div class="section-content reveal">
+        <div class="section-overline">Thorax</div>
+        <h2 class="section-title">Pure flight muscle</h2>
+        <p class="section-body">
+          Three fused segments house the indirect flight muscles
+          that power both wing pairs. The thorax is the engine
+          that makes a wasp airborne in milliseconds.
+        </p>
+      </div>
+    </section>
+
+    <!-- Anatomy: Petiole -->
+    <section class="section" data-camera-target="petiole">
+      <span class="section-number">[03]</span>
+      <div class="section-content right reveal">
+        <div class="section-overline">Petiole</div>
+        <h2 class="section-title">The wasp waist</h2>
+        <p class="section-body">
+          The narrow petiole connecting thorax to abdomen isn't
+          just aesthetic — it allows the abdomen to curl
+          underneath for stinging. Form follows function.
+        </p>
+      </div>
+    </section>
+
+    <!-- Anatomy: Stinger -->
+    <section class="section" data-camera-target="stinger">
+      <span class="section-number">[04]</span>
+      <div class="section-content reveal">
+        <div class="section-overline">Stinger</div>
+        <h2 class="section-title">Smooth. Reusable.</h2>
+        <p class="section-body">
+          Unlike a bee's barbed stinger, a wasp's ovipositor
+          is smooth — it can sting repeatedly without
+          self-destructing. The venom is alkaline, designed
+          to paralyze prey, not just warn predators.
+        </p>
+      </div>
+    </section>
+
+    <!-- Anatomy: Eyes -->
+    <section class="section" data-camera-target="eyes">
+      <span class="section-number">[05]</span>
+      <div class="section-content right reveal">
+        <div class="section-overline">Compound Eyes</div>
+        <h2 class="section-title">You were seen first</h2>
+        <p class="section-body">
+          Nearly 360-degree vision from thousands of hexagonal
+          lenses. Wasps detect ultraviolet patterns invisible
+          to humans. They track movement faster than any
+          vertebrate eye.
+        </p>
+      </div>
+    </section>
+
+    <!-- Anatomy: Wings -->
+    <section class="section" data-camera-target="wings">
+      <span class="section-number">[06]</span>
+      <div class="section-content reveal">
+        <div class="section-overline">Wings</div>
+        <h2 class="section-title">40 beats per second</h2>
+        <p class="section-body">
+          Two pairs of wings, hooked together mid-flight by
+          tiny hamuli. Forewings generate lift, hindwings
+          stabilize. At rest, they fold flat along the body —
+          ready to deploy in an instant.
+        </p>
+      </div>
+    </section>
+
+    <!-- Spacer for scroll -->
+    <section class="section" style="min-height: 50vh;"></section>
+
+  </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
 
-  <!-- Three.js App -->
   <script type="importmap">
     {
       "imports": {
@@ -176,50 +358,50 @@
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+    gsap.registerPlugin(ScrollTrigger);
+
 
     // ════════════════════════════════════════════════════════════════
-    // SCENE SETUP
+    // SCENE
     // ════════════════════════════════════════════════════════════════
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x09090B);
 
     const camera = new THREE.PerspectiveCamera(
-      45, window.innerWidth / window.innerHeight, 0.01, 100
+      40, window.innerWidth / window.innerHeight, 0.01, 100
     );
-    // Slightly below — looking UP at the wasp. Submissive angle.
-    camera.position.set(0, -0.2, 1.5);
+    camera.position.set(0, 0, 2.2);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-    document.getElementById('app').appendChild(renderer.domElement);
+    renderer.toneMappingExposure = 1.3;
+    document.getElementById('three-canvas').appendChild(renderer.domElement);
 
 
     // ════════════════════════════════════════════════════════════════
-    // LIGHTING — warm key, cold rim, subtle ambient
+    // LIGHTING
     // ════════════════════════════════════════════════════════════════
-    const keyLight = new THREE.DirectionalLight(0xFFE4B5, 1.4);
-    keyLight.position.set(2, 3, 2);
+    const keyLight = new THREE.DirectionalLight(0xFFE4B5, 1.6);
+    keyLight.position.set(3, 4, 3);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x4466FF, 0.7);
-    rimLight.position.set(-2, -1, -3);
+    const rimLight = new THREE.DirectionalLight(0x4466FF, 0.8);
+    rimLight.position.set(-3, -1, -3);
     scene.add(rimLight);
 
-    const ambient = new THREE.AmbientLight(0x222222, 0.4);
+    const ambient = new THREE.AmbientLight(0x222222, 0.5);
     scene.add(ambient);
 
-    // Subtle fill from below for the menace
-    const fillLight = new THREE.DirectionalLight(0x332211, 0.3);
-    fillLight.position.set(0, -3, 1);
+    const fillLight = new THREE.DirectionalLight(0x221111, 0.3);
+    fillLight.position.set(0, -3, 2);
     scene.add(fillLight);
 
 
     // ════════════════════════════════════════════════════════════════
-    // LABEL DATA — anatomy facts, written from the wasp's perspective
+    // LABEL DATA
     // ════════════════════════════════════════════════════════════════
     const labelData = {
       'Stinger':              { name: 'STINGER',        fact: 'Smooth. Reusable. Unlike bees, a wasp can sting repeatedly.' },
@@ -240,14 +422,11 @@
       'Antenna_L_Flagellum':  { name: 'ANTENNAE',       fact: 'Chemical and tactile sensors. Smell, taste, touch — all at once.' },
       'Antenna_R_Flagellum':  { name: 'ANTENNAE',       fact: 'Chemical and tactile sensors. Smell, taste, touch — all at once.' },
     };
-
-    // Also match legs
     for (const prefix of ['Fore', 'Mid', 'Hind']) {
       for (const side of ['L', 'R']) {
         for (const part of ['Femur', 'Tibia']) {
           labelData[`Leg_${prefix}_${side}_${part}`] = {
-            name: 'LEGS',
-            fact: 'Six. Tipped with claws and adhesive pads. They land wherever they want.'
+            name: 'LEGS', fact: 'Six. Tipped with claws and adhesive pads. They land wherever they want.'
           };
         }
       }
@@ -262,10 +441,15 @@
     const actions = {};
     let currentAction = null;
     const clock = new THREE.Clock();
-
     const mouse = new THREE.Vector2(0, 0);
     const raycaster = new THREE.Raycaster();
-    const targetRotation = { x: 0, y: 0 };
+
+    // Camera animation targets (driven by scroll)
+    const cameraState = {
+      x: 0, y: 0, z: 2.2,
+      lookX: 0, lookY: 0, lookZ: 0,
+      rotY: 0,  // model rotation driven by scroll
+    };
 
     const labelEl = document.getElementById('label');
     const labelNameEl = labelEl.querySelector('.label-name');
@@ -280,64 +464,141 @@
       waspModel = gltf.scene;
       scene.add(waspModel);
 
-      // Center the model
+      // Center
       const box = new THREE.Box3().setFromObject(waspModel);
       const center = box.getCenter(new THREE.Vector3());
       waspModel.position.sub(center);
 
-      // Animation setup
+      // Animations
       if (gltf.animations.length > 0) {
         mixer = new THREE.AnimationMixer(waspModel);
-        console.log('Animation clips:', gltf.animations.map(c => c.name));
-
         gltf.animations.forEach((clip) => {
           const action = mixer.clipAction(clip);
           actions[clip.name] = action;
           action.setLoop(THREE.LoopRepeat);
         });
-
-        // Start with Idle
         if (actions['Idle']) {
           actions['Idle'].play();
           currentAction = actions['Idle'];
         }
       }
 
-      // Dismiss loading screen
+      // Dismiss loading
       document.getElementById('loading').classList.add('fade-out');
       setTimeout(() => {
         document.getElementById('loading').style.display = 'none';
-        // Reveal UI
-        document.getElementById('title').classList.add('visible');
-        setTimeout(() => {
-          document.getElementById('controls').classList.add('visible');
-        }, 200);
-      }, 800);
+        document.getElementById('controls').classList.add('visible');
+        setupScrollAnimations();
+        revealSections();
+      }, 1000);
 
-    }, (progress) => {
-      if (progress.total > 0) {
-        const pct = (progress.loaded / progress.total * 100).toFixed(0);
-        console.log(`Loading: ${pct}%`);
-      }
-    }, (error) => {
-      console.error('Failed to load wasp model:', error);
-    });
+    }, undefined, (err) => console.error('Load failed:', err));
 
 
     // ════════════════════════════════════════════════════════════════
-    // ANIMATION STATE SWITCHING
+    // SCROLL-DRIVEN CAMERA + MODEL ROTATION
+    // ════════════════════════════════════════════════════════════════
+    function setupScrollAnimations() {
+      // Scroll progress bar
+      ScrollTrigger.create({
+        trigger: '#scroll-container',
+        start: 'top top',
+        end: 'bottom bottom',
+        onUpdate: (self) => {
+          document.getElementById('progress').style.width = `${self.progress * 100}%`;
+        }
+      });
+
+      // Hero → Thorax: rotate model, camera moves right
+      gsap.to(cameraState, {
+        rotY: Math.PI * 0.3,
+        x: 0.3,
+        scrollTrigger: {
+          trigger: '[data-camera-target="thorax"]',
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1,
+        }
+      });
+
+      // Thorax → Petiole: rotate more, camera moves left
+      gsap.to(cameraState, {
+        rotY: Math.PI * 0.8,
+        x: -0.3,
+        scrollTrigger: {
+          trigger: '[data-camera-target="petiole"]',
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1,
+        }
+      });
+
+      // Petiole → Stinger: see the back, rotate further
+      gsap.to(cameraState, {
+        rotY: Math.PI * 1.2,
+        x: 0.2,
+        z: 1.8,
+        scrollTrigger: {
+          trigger: '[data-camera-target="stinger"]',
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1,
+        }
+      });
+
+      // Stinger → Eyes: swing back around to the front
+      gsap.to(cameraState, {
+        rotY: Math.PI * 1.9,
+        x: -0.2,
+        z: 1.6,
+        y: 0.15,
+        scrollTrigger: {
+          trigger: '[data-camera-target="eyes"]',
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1,
+        }
+      });
+
+      // Eyes → Wings: top-down angle
+      gsap.to(cameraState, {
+        rotY: Math.PI * 2.2,
+        y: 0.5,
+        z: 2.0,
+        x: 0,
+        scrollTrigger: {
+          trigger: '[data-camera-target="wings"]',
+          start: 'top bottom',
+          end: 'top center',
+          scrub: 1,
+        }
+      });
+    }
+
+
+    // ════════════════════════════════════════════════════════════════
+    // SECTION REVEAL ON SCROLL
+    // ════════════════════════════════════════════════════════════════
+    function revealSections() {
+      document.querySelectorAll('.reveal').forEach(el => {
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 85%',
+          onEnter: () => el.classList.add('visible'),
+        });
+      });
+    }
+
+
+    // ════════════════════════════════════════════════════════════════
+    // STATE SWITCHING
     // ════════════════════════════════════════════════════════════════
     function switchState(stateName) {
       const newAction = actions[stateName];
       if (!newAction || newAction === currentAction) return;
-
-      if (currentAction) {
-        currentAction.fadeOut(0.4);
-      }
+      if (currentAction) currentAction.fadeOut(0.4);
       newAction.reset().fadeIn(0.4).play();
       currentAction = newAction;
-
-      // Update button states
       document.querySelectorAll('.state-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.state === stateName);
       });
@@ -351,35 +612,10 @@
     // ════════════════════════════════════════════════════════════════
     // MOUSE TRACKING
     // ════════════════════════════════════════════════════════════════
-    const LERP_FACTOR = 0.04;
-
     window.addEventListener('mousemove', (e) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
     });
-
-    function updateMouseTracking() {
-      if (!waspModel) return;
-
-      // Wasp orients toward cursor — deliberate, menacing
-      targetRotation.y = mouse.x * 0.35;
-      targetRotation.x = -mouse.y * 0.15;
-
-      waspModel.rotation.y += (targetRotation.y - waspModel.rotation.y) * LERP_FACTOR;
-      waspModel.rotation.x += (targetRotation.x - waspModel.rotation.x) * LERP_FACTOR;
-    }
-
-
-    // ════════════════════════════════════════════════════════════════
-    // CAMERA IDLE SWAY
-    // ════════════════════════════════════════════════════════════════
-    const baseCameraPos = { x: 0, y: -0.2, z: 1.5 };
-
-    function updateCameraSway(time) {
-      camera.position.x = baseCameraPos.x + Math.sin(time * 0.25) * 0.015;
-      camera.position.y = baseCameraPos.y + Math.cos(time * 0.18) * 0.008;
-      camera.lookAt(0, 0, 0);
-    }
 
 
     // ════════════════════════════════════════════════════════════════
@@ -389,37 +625,27 @@
 
     function updateLabels() {
       if (!waspModel) return;
-
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObject(waspModel, true);
 
       if (intersects.length > 0) {
-        const obj = intersects[0].object;
-        const data = labelData[obj.name];
-
+        const data = labelData[intersects[0].object.name];
         if (data) {
-          // Only update DOM if label changed
           if (data.name !== currentLabelName) {
             labelNameEl.textContent = data.name;
             labelFactEl.textContent = data.fact;
             currentLabelName = data.name;
           }
-
-          // Project 3D hit point to screen
-          const point = intersects[0].point.clone();
-          point.project(camera);
-          const x = (point.x * 0.5 + 0.5) * window.innerWidth;
-          const y = (-point.y * 0.5 + 0.5) * window.innerHeight;
-
-          // Offset label to the right and above hit point
-          labelEl.style.left = `${Math.min(x + 24, window.innerWidth - 340)}px`;
-          labelEl.style.top = `${Math.max(y - 80, 20)}px`;
+          const pt = intersects[0].point.clone().project(camera);
+          const x = (pt.x * 0.5 + 0.5) * window.innerWidth;
+          const y = (-pt.y * 0.5 + 0.5) * window.innerHeight;
+          labelEl.style.left = `${Math.min(x + 20, window.innerWidth - 320)}px`;
+          labelEl.style.top = `${Math.max(y - 70, 20)}px`;
           labelEl.classList.add('visible');
           document.body.style.cursor = 'pointer';
           return;
         }
       }
-
       labelEl.classList.remove('visible');
       currentLabelName = null;
       document.body.style.cursor = 'crosshair';
@@ -431,16 +657,27 @@
     // ════════════════════════════════════════════════════════════════
     function animate() {
       requestAnimationFrame(animate);
-
       const delta = clock.getDelta();
       const elapsed = clock.getElapsedTime();
 
       if (mixer) mixer.update(delta);
 
-      updateMouseTracking();
-      updateCameraSway(elapsed);
-      updateLabels();
+      // Apply scroll-driven camera + subtle mouse offset
+      if (waspModel) {
+        // Model rotation driven by scroll
+        waspModel.rotation.y += (cameraState.rotY - waspModel.rotation.y) * 0.06;
 
+        // Subtle mouse influence on top of scroll rotation
+        waspModel.rotation.x += (-mouse.y * 0.08 - waspModel.rotation.x) * 0.03;
+      }
+
+      // Camera position from scroll state + idle sway
+      camera.position.x = cameraState.x + Math.sin(elapsed * 0.2) * 0.01 + mouse.x * 0.05;
+      camera.position.y = cameraState.y + Math.cos(elapsed * 0.15) * 0.008;
+      camera.position.z = cameraState.z;
+      camera.lookAt(cameraState.lookX, cameraState.lookY, cameraState.lookZ);
+
+      updateLabels();
       renderer.render(scene, camera);
     }
     animate();
@@ -453,23 +690,6 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-
-    // ════════════════════════════════════════════════════════════════
-    // CLEANUP
-    // ════════════════════════════════════════════════════════════════
-    window.addEventListener('beforeunload', () => {
-      renderer.dispose();
-      scene.traverse((child) => {
-        if (child.isMesh) {
-          child.geometry.dispose();
-          if (child.material) {
-            if (child.material.map) child.material.map.dispose();
-            child.material.dispose();
-          }
-        }
-      });
     });
   </script>
 </body>
