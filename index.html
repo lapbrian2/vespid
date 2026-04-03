@@ -351,6 +351,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
     gsap.registerPlugin(ScrollTrigger);
 
@@ -402,6 +403,33 @@
     const topLight = new THREE.DirectionalLight(0xFFFFFF, 0.6);
     topLight.position.set(0, 5, 0);
     scene.add(topLight);
+
+    // ── Environment map for realistic reflections ────────
+    // Generate a subtle studio environment programmatically
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+
+    // Create a simple gradient environment
+    const envScene = new THREE.Scene();
+    const envGeo = new THREE.SphereGeometry(10, 32, 16);
+    const envMat = new THREE.MeshBasicMaterial({
+      color: 0x111118,
+      side: THREE.BackSide
+    });
+    envScene.add(new THREE.Mesh(envGeo, envMat));
+    // Add a bright spot for specular highlights
+    const spotGeo = new THREE.SphereGeometry(0.5, 8, 8);
+    const spotMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const spot = new THREE.Mesh(spotGeo, spotMat);
+    spot.position.set(3, 3, 3);
+    envScene.add(spot);
+    const spot2 = new THREE.Mesh(spotGeo.clone(), new THREE.MeshBasicMaterial({ color: 0x4466FF }));
+    spot2.position.set(-3, -1, -3);
+    envScene.add(spot2);
+
+    const envRT = pmremGenerator.fromScene(envScene, 0.04);
+    scene.environment = envRT.texture;
+    pmremGenerator.dispose();
 
 
     // ════════════════════════════════════════════════════════════════
