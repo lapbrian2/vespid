@@ -106,25 +106,30 @@
     .state-btn:hover { color: #A1A1AA; }
     .state-btn.active { color: #F5F5F0; border-bottom-color: #B8964E; }
 
-    /* ── Hotspot label ───────────────────────────────── */
-    #label {
-      position: fixed;
+    /* ── Anatomy labels ──────────────────────────────── */
+    #labels-container {
+      position: fixed; inset: 0;
       pointer-events: none; z-index: 15;
-      opacity: 0; transition: opacity 0.2s ease;
     }
-    #label.visible { opacity: 1; }
-    .label-line {
-      width: 1px; height: 32px;
-      background: #52525B; margin-bottom: 6px;
+    .anatomy-label {
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
-    .label-name {
+    .anatomy-label.visible { opacity: 1; }
+    .label-title {
       font-weight: 500; font-size: 10px;
-      letter-spacing: 0.3em; text-transform: uppercase;
-      color: #B8964E; margin-bottom: 3px;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: #F5F5F0; margin-bottom: 6px;
     }
-    .label-fact {
-      font-weight: 400; font-size: 13px;
-      color: #E4E4E7; max-width: 260px; line-height: 1.5;
+    .label-items {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .label-item {
+      font-weight: 400; font-size: 10px;
+      color: #71717A; letter-spacing: 0.05em;
+      padding-left: 10px;
+      border-left: 1px solid #333;
     }
 
     /* ── Nav arrows — bottom corners ─────────────────── */
@@ -165,11 +170,29 @@
     <button class="state-btn" data-state="fly">Fly</button>
   </div>
 
-  <!-- Hotspot label -->
-  <div id="label">
-    <div class="label-line"></div>
-    <div class="label-name"></div>
-    <div class="label-fact"></div>
+  <!-- Anatomy labels — anchored to 3D positions -->
+  <div id="labels-container">
+    <div class="anatomy-label" data-anchor="mandibles">
+      <div class="label-title">Mandibula</div>
+      <div class="label-items">
+        <div class="label-item">Mastication &amp; manipulation</div>
+        <div class="label-item">Prey processing</div>
+      </div>
+    </div>
+    <div class="anatomy-label" data-anchor="thorax">
+      <div class="label-title">Thorax</div>
+      <div class="label-items">
+        <div class="label-item">Indirect flight muscles</div>
+        <div class="label-item">Wing articulation</div>
+      </div>
+    </div>
+    <div class="anatomy-label" data-anchor="abdomen">
+      <div class="label-title">Abdomen</div>
+      <div class="label-items">
+        <div class="label-item">Venom sac + stinger</div>
+        <div class="label-item">Tracheal system</div>
+      </div>
+    </div>
   </div>
 
   <!-- Nav -->
@@ -197,7 +220,7 @@
     const camera = new THREE.PerspectiveCamera(
       30, window.innerWidth / window.innerHeight, 0.01, 50
     );
-    camera.position.set(0, 0.05, 1.8);
+    camera.position.set(0, 0.1, 2.8);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -274,14 +297,7 @@
     let waspPivot = null;
     const clock = new THREE.Clock();
     const mouse = { x: 0, y: 0 };
-    const raycaster = new THREE.Raycaster();
-    const mouseVec = new THREE.Vector2();
     let animState = 'idle';
-    let lastJerk = 0, jerkX = 0, jerkY = 0;
-
-    const labelEl = document.getElementById('label');
-    const labelNameEl = labelEl.querySelector('.label-name');
-    const labelFactEl = labelEl.querySelector('.label-fact');
 
 
     // ════════════════════════════════════════════════════════════════
@@ -302,6 +318,8 @@
       waspPivot.add(waspModel);
       scene.add(waspPivot);
 
+      labelsReady = true;
+
       // Reveal UI
       document.getElementById('loading').classList.add('fade-out');
       setTimeout(() => {
@@ -320,8 +338,8 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.enablePan = false;
-    controls.minDistance = 0.6;
-    controls.maxDistance = 4.0;
+    controls.minDistance = 1.0;
+    controls.maxDistance = 6.0;
     controls.target.set(0, 0, 0);
     controls.autoRotate = false;
     controls.rotateSpeed = 0.5;
@@ -330,38 +348,51 @@
     window.addEventListener('mousemove', (e) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      mouseVec.set(mouse.x, mouse.y);
     });
 
 
     // ════════════════════════════════════════════════════════════════
-    // HOTSPOT LABELS
+    // ANATOMY LABELS — anchored to 3D world positions
     // ════════════════════════════════════════════════════════════════
-    const labelData = {
-      name: 'VESPA ORIENTALIS',
-      fact: 'The oriental hornet. Solar-powered predator with a cuticle that harvests sunlight.'
+    // These are approximate positions relative to the model center
+    // Adjusted after model loads based on bounding box
+    const labelAnchors = {
+      mandibles: new THREE.Vector3(0.35, -0.02, 0.1),
+      thorax:    new THREE.Vector3(0, 0.12, -0.05),
+      abdomen:   new THREE.Vector3(-0.3, 0.0, -0.05),
     };
-    let labelVisible = false;
+
+    const labelElements = {};
+    document.querySelectorAll('.anatomy-label').forEach(el => {
+      labelElements[el.dataset.anchor] = el;
+    });
+
+    let labelsReady = false;
 
     function updateLabels() {
-      if (!waspModel) return;
-      raycaster.setFromCamera(mouseVec, camera);
-      const hits = raycaster.intersectObject(waspModel, true);
+      if (!waspModel || !labelsReady) return;
 
-      if (hits.length > 0) {
-        const pt = hits[0].point.clone().project(camera);
-        const sx = (pt.x * 0.5 + 0.5) * window.innerWidth;
-        const sy = (-pt.y * 0.5 + 0.5) * window.innerHeight;
+      for (const [key, anchor] of Object.entries(labelAnchors)) {
+        const el = labelElements[key];
+        if (!el) continue;
 
-        labelNameEl.textContent = labelData.name;
-        labelFactEl.textContent = labelData.fact;
-        labelEl.style.left = `${Math.min(sx + 20, window.innerWidth - 300)}px`;
-        labelEl.style.top = `${Math.max(sy - 60, 20)}px`;
-        if (!labelVisible) { labelEl.classList.add('visible'); labelVisible = true; }
-        document.body.style.cursor = 'pointer';
-      } else {
-        if (labelVisible) { labelEl.classList.remove('visible'); labelVisible = false; }
-        document.body.style.cursor = 'default';
+        // Transform anchor by wasp pivot + model
+        const worldPos = anchor.clone();
+        waspPivot.localToWorld(worldPos);
+
+        // Project to screen
+        const projected = worldPos.clone().project(camera);
+        const sx = (projected.x * 0.5 + 0.5) * window.innerWidth;
+        const sy = (-projected.y * 0.5 + 0.5) * window.innerHeight;
+
+        // Check if visible (in front of camera)
+        if (projected.z < 1) {
+          el.style.left = `${sx}px`;
+          el.style.top = `${sy}px`;
+          el.classList.add('visible');
+        } else {
+          el.classList.remove('visible');
+        }
       }
     }
 
