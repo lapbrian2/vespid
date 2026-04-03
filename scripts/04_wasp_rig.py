@@ -70,11 +70,21 @@ bone_mesh_map = {
     "Antenna_R":    ["Antenna_R_Scape", "Antenna_R_Flagellum"],
 }
 
-# Add legs to Thorax
+# Add legs to Thorax (3 segments now: coxa, femur, tibia)
 for prefix in ["Fore", "Mid", "Hind"]:
     for side in ["L", "R"]:
-        for part in ["Femur", "Tibia"]:
+        for part in ["Coxa", "Femur", "Tibia"]:
             bone_mesh_map.setdefault("Thorax", []).append(f"Leg_{prefix}_{side}_{part}")
+
+# Add wing veins to wing bones
+for wtype in ["Fore", "Hind"]:
+    for side in ["L", "R"]:
+        vein_name = f"Wing_{wtype}_{side}_Vein"
+        bone_mesh_map.setdefault(f"Wing_{wtype}_{side}", []).append(vein_name)
+
+# Add antenna pedicels to antenna bones
+for side in ["L", "R"]:
+    bone_mesh_map.setdefault(f"Antenna_{side}", []).append(f"Antenna_{side}_Pedicel")
 
 for bone_name, mesh_names in bone_mesh_map.items():
     for mesh_name in mesh_names:

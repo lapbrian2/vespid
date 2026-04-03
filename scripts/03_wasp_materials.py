@@ -106,11 +106,20 @@ assignments = {
     "StingerMat": ["Stinger"],
 }
 
-# Legs get chitin
+# Legs get chitin (3 segments)
 for prefix in ["Fore", "Mid", "Hind"]:
     for side in ["L", "R"]:
-        for part in ["Femur", "Tibia"]:
+        for part in ["Coxa", "Femur", "Tibia"]:
             assignments["Chitin"].append(f"Leg_{prefix}_{side}_{part}")
+
+# Antenna pedicels get chitin
+for side in ["L", "R"]:
+    assignments["Chitin"].append(f"Antenna_{side}_Pedicel")
+
+# Wing veins get chitin
+for wtype in ["Fore", "Hind"]:
+    for side in ["L", "R"]:
+        assignments["Chitin"].append(f"Wing_{wtype}_{side}_Vein")
 
 for mat_name, obj_names in assignments.items():
     mat = bpy.data.materials.get(mat_name)

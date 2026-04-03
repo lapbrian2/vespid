@@ -452,11 +452,18 @@
     };
     for (const prefix of ['Fore', 'Mid', 'Hind']) {
       for (const side of ['L', 'R']) {
-        for (const part of ['Femur', 'Tibia']) {
+        for (const part of ['Coxa', 'Femur', 'Tibia']) {
           labelData[`Leg_${prefix}_${side}_${part}`] = {
             name: 'LEGS', fact: 'Six. Tipped with claws and adhesive pads. They land wherever they want.'
           };
         }
+      }
+    }
+    // Antenna pedicels + wing veins
+    for (const side of ['L', 'R']) {
+      labelData[`Antenna_${side}_Pedicel`] = labelData[`Antenna_${side}_Scape`];
+      for (const wt of ['Fore', 'Hind']) {
+        labelData[`Wing_${wt}_${side}_Vein`] = labelData[`Wing_${wt}_${side}`];
       }
     }
 
