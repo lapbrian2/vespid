@@ -67,11 +67,15 @@
     /* ── Canvas (fixed background) ───────────────────── */
     #three-canvas {
       position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+    }
+    #three-canvas canvas {
+      pointer-events: auto;
     }
 
     /* ── Scroll container ────────────────────────────── */
     #scroll-container {
-      position: relative; z-index: 1;
+      position: relative; z-index: 10;
     }
 
     /* ── Sections ────────────────────────────────────── */
@@ -206,10 +210,8 @@
       transition: width 0.1s linear;
     }
 
-    /* ── Section reveal animations ────────────────────── */
-    .reveal {
-      opacity: 0; transform: translateY(40px);
-    }
+    /* ── Section reveal animations (GSAP handles these) ── */
+    .reveal { }
   </style>
 </head>
 <body>
@@ -357,7 +359,7 @@
     // SCENE
     // ════════════════════════════════════════════════════════════════
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x09090B);
+    // No scene.background — transparent canvas, body bg shows through
 
     const camera = new THREE.PerspectiveCamera(
       40, window.innerWidth / window.innerHeight, 0.01, 100
@@ -365,31 +367,41 @@
     camera.position.set(0, 0, 2.2);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setClearColor(0x000000, 0);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.3;
+    renderer.toneMappingExposure = 1.8;
     document.getElementById('three-canvas').appendChild(renderer.domElement);
 
 
     // ════════════════════════════════════════════════════════════════
     // LIGHTING
     // ════════════════════════════════════════════════════════════════
-    const keyLight = new THREE.DirectionalLight(0xFFE4B5, 1.6);
-    keyLight.position.set(3, 4, 3);
+    // Key light — warm, strong, front-right
+    const keyLight = new THREE.DirectionalLight(0xFFE4B5, 3.0);
+    keyLight.position.set(3, 3, 4);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x4466FF, 0.8);
-    rimLight.position.set(-3, -1, -3);
+    // Rim light — cold blue, behind
+    const rimLight = new THREE.DirectionalLight(0x6688FF, 1.5);
+    rimLight.position.set(-3, 1, -3);
     scene.add(rimLight);
 
-    const ambient = new THREE.AmbientLight(0x222222, 0.5);
+    // Ambient — lifted to show chitin detail
+    const ambient = new THREE.AmbientLight(0x444444, 1.2);
     scene.add(ambient);
 
-    const fillLight = new THREE.DirectionalLight(0x221111, 0.3);
-    fillLight.position.set(0, -3, 2);
+    // Fill from below — the menace uplighting
+    const fillLight = new THREE.DirectionalLight(0xFFDDBB, 0.8);
+    fillLight.position.set(-1, -3, 2);
     scene.add(fillLight);
+
+    // Top light — catches the thorax and wing surfaces
+    const topLight = new THREE.DirectionalLight(0xFFFFFF, 0.6);
+    topLight.position.set(0, 5, 0);
+    scene.add(topLight);
 
 
     // ════════════════════════════════════════════════════════════════
@@ -573,17 +585,20 @@
     // ════════════════════════════════════════════════════════════════
     function revealSections() {
       document.querySelectorAll('.reveal').forEach(el => {
-        gsap.to(el, {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
+        gsap.fromTo(el,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1, y: 0,
+            duration: 1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: el.closest('.section'),
+              start: 'top 80%',
+              end: 'top 30%',
+              toggleActions: 'play none none reverse',
+            }
           }
-        });
+        );
       });
     }
 
