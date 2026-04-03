@@ -526,8 +526,19 @@
     let animState = 'idle'; // idle, agitated, attack
     const animParams = { bobSpeed: 1, bobAmount: 0.015, rockSpeed: 0.7, rockAmount: 0.02 };
 
-    // Scroll-driven rotation
-    const scrollState = { rotY: 0, camX: 0.15, camY: 0.05, camZ: 1.6 };
+    // Scroll proxy — camera orbits, wasp stays still
+    const scrollProxy = { progress: 0 };
+
+    // Camera path — spline orbit around the wasp
+    const cameraPath = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.15, 0.05, 1.6),    // Hero — front, slightly right
+      new THREE.Vector3(0.5, 0.1, 1.3),       // Thorax — right side
+      new THREE.Vector3(0.3, -0.05, 1.0),     // Petiole — closer, lower
+      new THREE.Vector3(-0.3, 0.0, 1.2),      // Stinger — left side
+      new THREE.Vector3(-0.15, 0.2, 1.0),     // Eyes — face on, close
+      new THREE.Vector3(0.0, 0.5, 1.4),       // Wings — above
+      new THREE.Vector3(0.15, 0.05, 1.6),     // Return to start
+    ], false, 'catmullrom', 0.5);
 
     const labelEl = document.getElementById('label');
     const labelNameEl = labelEl.querySelector('.label-name');
@@ -616,41 +627,26 @@
 
 
     // ════════════════════════════════════════════════════════════════
-    // SCROLL — single smooth timeline, one rotation over full page
+    // SCROLL — camera orbits on spline, wasp stays still
     // ════════════════════════════════════════════════════════════════
     function initScrollAnimations() {
-      // Progress bar
+      // Master scroll — one progress value drives everything
       ScrollTrigger.create({
         trigger: '#scroll-container',
         start: 'top top',
         end: 'bottom bottom',
+        scrub: 1.5,
         onUpdate: (self) => {
+          scrollProxy.progress = self.progress;
           document.getElementById('progress').style.width = `${self.progress * 100}%`;
         }
       });
 
-      // ONE master timeline — smooth continuous rotation over full scroll
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: '#scroll-container',
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 2,  // Smooth with 2s lag
-        }
-      });
-
-      // Smooth 360 orbit + camera dance
-      tl.to(scrollState, { rotY: Math.PI * 0.4, camX: 0.3, duration: 1 }, 0)       // Thorax
-        .to(scrollState, { rotY: Math.PI * 0.9, camX: -0.3, camZ: 1.4, duration: 1 }, 1) // Petiole
-        .to(scrollState, { rotY: Math.PI * 1.4, camX: 0.15, camY: -0.1, camZ: 1.3, duration: 1 }, 2) // Stinger
-        .to(scrollState, { rotY: Math.PI * 1.9, camX: -0.15, camY: 0.1, camZ: 1.2, duration: 1 }, 3) // Eyes
-        .to(scrollState, { rotY: Math.PI * 2.3, camX: 0, camY: 0.35, camZ: 1.5, duration: 1 }, 4);  // Wings
-
-      // Section reveals — simple, robust
+      // Section content reveals
       document.querySelectorAll('.section-content').forEach(el => {
         gsap.fromTo(el,
           { opacity: 0, y: 40 },
-          { opacity: 1, y: 0, duration: 0.5,
+          { opacity: 1, y: 0,
             scrollTrigger: {
               trigger: el.closest('.section'),
               start: 'top 70%',
@@ -661,11 +657,10 @@
         );
       });
 
-      // Section numbers
       document.querySelectorAll('.section-number').forEach(num => {
         gsap.fromTo(num,
           { opacity: 0 },
-          { opacity: 0.5, duration: 0.3,
+          { opacity: 0.5,
             scrollTrigger: {
               trigger: num.closest('.section'),
               start: 'top 75%',
@@ -755,18 +750,11 @@
       // Procedural animation
       updateProceduralAnimation(elapsed);
 
-      // Scroll-driven model rotation + mouse influence
-      if (waspModel) {
-        const targetRotY = scrollState.rotY + mouse.x * 0.12;
-        const targetRotX = -mouse.y * 0.06;
-        waspModel.rotation.y += (targetRotY - waspModel.rotation.y) * 0.08;
-        waspModel.rotation.x += (targetRotX - waspModel.rotation.x) * 0.06;
-      }
-
-      // Camera from scroll + subtle sway
-      camera.position.x = scrollState.camX + Math.sin(elapsed * 0.2) * 0.008 + mouse.x * 0.03;
-      camera.position.y = scrollState.camY + Math.cos(elapsed * 0.15) * 0.006;
-      camera.position.z = scrollState.camZ;
+      // Camera follows spline path based on scroll progress
+      const camPos = cameraPath.getPointAt(scrollProxy.progress);
+      camera.position.x = camPos.x + Math.sin(elapsed * 0.2) * 0.005 + mouse.x * 0.02;
+      camera.position.y = camPos.y + Math.cos(elapsed * 0.15) * 0.004;
+      camera.position.z = camPos.z;
       camera.lookAt(0, 0, 0);
 
       // Particles
