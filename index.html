@@ -249,7 +249,7 @@
       <div class="hero-content reveal">
         <div class="hero-label">[01] VESPID</div>
         <h1 class="hero-title">Vespid</h1>
-        <p class="hero-species">Vespula vulgaris</p>
+        <p class="hero-species">Vespa orientalis</p>
       </div>
       <div class="hero-scroll">Scroll</div>
     </section>
@@ -347,21 +347,18 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
     gsap.registerPlugin(ScrollTrigger);
-
 
     // ════════════════════════════════════════════════════════════════
     // SCENE
     // ════════════════════════════════════════════════════════════════
     const scene = new THREE.Scene();
-    // No scene.background — transparent canvas, body bg shows through
 
     const camera = new THREE.PerspectiveCamera(
-      40, window.innerWidth / window.innerHeight, 0.01, 100
+      35, window.innerWidth / window.innerHeight, 0.01, 100
     );
-    camera.position.set(0, 0, 2.2);
+    camera.position.set(0, 0.1, 3);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -369,172 +366,199 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.8;
+    renderer.toneMappingExposure = 1.6;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.getElementById('three-canvas').appendChild(renderer.domElement);
 
-
     // ════════════════════════════════════════════════════════════════
-    // LIGHTING
+    // LIGHTING — dramatic, cinematic
     // ════════════════════════════════════════════════════════════════
-    // Key light — warm, strong, front-right
-    const keyLight = new THREE.DirectionalLight(0xFFE4B5, 3.0);
-    keyLight.position.set(3, 3, 4);
+    const keyLight = new THREE.DirectionalLight(0xFFE4B5, 2.5);
+    keyLight.position.set(4, 4, 5);
+    keyLight.castShadow = true;
     scene.add(keyLight);
 
-    // Rim light — cold blue, behind
-    const rimLight = new THREE.DirectionalLight(0x6688FF, 1.5);
-    rimLight.position.set(-3, 1, -3);
+    const rimLight = new THREE.DirectionalLight(0x4466CC, 1.2);
+    rimLight.position.set(-4, 1, -4);
     scene.add(rimLight);
 
-    // Ambient — lifted to show chitin detail
-    const ambient = new THREE.AmbientLight(0x444444, 1.2);
+    const ambient = new THREE.AmbientLight(0x333344, 0.8);
     scene.add(ambient);
 
-    // Fill from below — the menace uplighting
-    const fillLight = new THREE.DirectionalLight(0xFFDDBB, 0.8);
-    fillLight.position.set(-1, -3, 2);
+    const fillLight = new THREE.DirectionalLight(0xFFDDBB, 0.5);
+    fillLight.position.set(-2, -3, 3);
     scene.add(fillLight);
 
-    // Top light — catches the thorax and wing surfaces
-    const topLight = new THREE.DirectionalLight(0xFFFFFF, 0.6);
-    topLight.position.set(0, 5, 0);
+    const topLight = new THREE.DirectionalLight(0xFFFFEE, 0.4);
+    topLight.position.set(0, 6, 0);
     scene.add(topLight);
 
-    // ── Environment map for realistic reflections ────────
-    // Generate a subtle studio environment programmatically
+    // Environment map for chitin reflections
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
-
-    // Create a simple gradient environment
     const envScene = new THREE.Scene();
-    const envGeo = new THREE.SphereGeometry(10, 32, 16);
-    const envMat = new THREE.MeshBasicMaterial({
-      color: 0x111118,
-      side: THREE.BackSide
-    });
-    envScene.add(new THREE.Mesh(envGeo, envMat));
-    // Add a bright spot for specular highlights
+    envScene.add(new THREE.Mesh(
+      new THREE.SphereGeometry(10, 32, 16),
+      new THREE.MeshBasicMaterial({ color: 0x0a0a12, side: THREE.BackSide })
+    ));
     const spotGeo = new THREE.SphereGeometry(0.5, 8, 8);
-    const spotMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-    const spot = new THREE.Mesh(spotGeo, spotMat);
-    spot.position.set(3, 3, 3);
-    envScene.add(spot);
-    const spot2 = new THREE.Mesh(spotGeo.clone(), new THREE.MeshBasicMaterial({ color: 0x4466FF }));
-    spot2.position.set(-3, -1, -3);
-    envScene.add(spot2);
-
-    const envRT = pmremGenerator.fromScene(envScene, 0.04);
-    scene.environment = envRT.texture;
+    const s1 = new THREE.Mesh(spotGeo, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }));
+    s1.position.set(4, 4, 4);
+    envScene.add(s1);
+    const s2 = new THREE.Mesh(spotGeo.clone(), new THREE.MeshBasicMaterial({ color: 0x3355AA }));
+    s2.position.set(-4, -1, -3);
+    envScene.add(s2);
+    scene.environment = pmremGenerator.fromScene(envScene, 0.04).texture;
     pmremGenerator.dispose();
 
-
     // ════════════════════════════════════════════════════════════════
-    // LABEL DATA
+    // DUST PARTICLES — atmospheric floating motes
     // ════════════════════════════════════════════════════════════════
-    const labelData = {
-      'Stinger':              { name: 'STINGER',        fact: 'Smooth. Reusable. Unlike bees, a wasp can sting repeatedly.' },
-      'Mandible_L':           { name: 'MANDIBLES',      fact: 'Built for cutting, not collecting. Wasps are predators.' },
-      'Mandible_R':           { name: 'MANDIBLES',      fact: 'Built for cutting, not collecting. Wasps are predators.' },
-      'Eye_L':                { name: 'COMPOUND EYES',  fact: 'Nearly 360-degree vision. You were seen before you saw it.' },
-      'Eye_R':                { name: 'COMPOUND EYES',  fact: 'Nearly 360-degree vision. You were seen before you saw it.' },
-      'Wing_Fore_L':          { name: 'WINGS',          fact: 'Two pairs, hooked together. 40 beats per second.' },
-      'Wing_Fore_R':          { name: 'WINGS',          fact: 'Two pairs, hooked together. 40 beats per second.' },
-      'Wing_Hind_L':          { name: 'WINGS',          fact: 'Two pairs, hooked together. 40 beats per second.' },
-      'Wing_Hind_R':          { name: 'WINGS',          fact: 'Two pairs, hooked together. 40 beats per second.' },
-      'Abdomen':              { name: 'ABDOMEN',        fact: 'Segmented exoskeleton. Houses venom glands and reproductive organs.' },
-      'Petiole':              { name: 'PETIOLE',        fact: 'The wasp waist. Allows the abdomen to curl under for stinging.' },
-      'Head':                 { name: 'HEAD',           fact: 'Houses the brain, compound eyes, and sensory antennae.' },
-      'Thorax':               { name: 'THORAX',         fact: 'Three fused segments. Pure flight muscle.' },
-      'Antenna_L_Scape':      { name: 'ANTENNAE',       fact: 'Chemical and tactile sensors. Smell, taste, touch — all at once.' },
-      'Antenna_R_Scape':      { name: 'ANTENNAE',       fact: 'Chemical and tactile sensors. Smell, taste, touch — all at once.' },
-      'Antenna_L_Flagellum':  { name: 'ANTENNAE',       fact: 'Chemical and tactile sensors. Smell, taste, touch — all at once.' },
-      'Antenna_R_Flagellum':  { name: 'ANTENNAE',       fact: 'Chemical and tactile sensors. Smell, taste, touch — all at once.' },
-    };
-    for (const prefix of ['Fore', 'Mid', 'Hind']) {
-      for (const side of ['L', 'R']) {
-        for (const part of ['Coxa', 'Femur', 'Tibia']) {
-          labelData[`Leg_${prefix}_${side}_${part}`] = {
-            name: 'LEGS', fact: 'Six. Tipped with claws and adhesive pads. They land wherever they want.'
-          };
-        }
-      }
+    const PARTICLE_COUNT = 200;
+    const particleGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const velocities = new Float32Array(PARTICLE_COUNT * 3);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 6;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 4;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+      velocities[i * 3] = (Math.random() - 0.5) * 0.002;
+      velocities[i * 3 + 1] = Math.random() * 0.001 + 0.0005;
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.002;
     }
-    // Antenna pedicels + wing veins
-    for (const side of ['L', 'R']) {
-      labelData[`Antenna_${side}_Pedicel`] = labelData[`Antenna_${side}_Scape`];
-      for (const wt of ['Fore', 'Hind']) {
-        labelData[`Wing_${wt}_${side}_Vein`] = labelData[`Wing_${wt}_${side}`];
-      }
-    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: 0xB8964E,
+      size: 0.008,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    scene.add(particles);
 
+    function updateParticles() {
+      const pos = particleGeo.attributes.position.array;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        pos[i * 3] += velocities[i * 3];
+        pos[i * 3 + 1] += velocities[i * 3 + 1];
+        pos[i * 3 + 2] += velocities[i * 3 + 2];
+        // Reset particles that drift too far
+        if (Math.abs(pos[i * 3]) > 3) pos[i * 3] *= -0.9;
+        if (pos[i * 3 + 1] > 2) pos[i * 3 + 1] = -2;
+        if (Math.abs(pos[i * 3 + 2]) > 3) pos[i * 3 + 2] *= -0.9;
+      }
+      particleGeo.attributes.position.needsUpdate = true;
+    }
 
     // ════════════════════════════════════════════════════════════════
     // STATE
     // ════════════════════════════════════════════════════════════════
-    let mixer = null;
     let waspModel = null;
-    const actions = {};
-    let currentAction = null;
+    let waspPivot = null; // Container for procedural animation
     const clock = new THREE.Clock();
     const mouse = new THREE.Vector2(0, 0);
     const raycaster = new THREE.Raycaster();
 
-    // Camera animation targets (driven by scroll)
-    const cameraState = {
-      x: 0, y: 0, z: 2.2,
-      lookX: 0, lookY: 0, lookZ: 0,
-      rotY: 0,  // model rotation driven by scroll
-    };
+    // Animation state
+    let animState = 'idle'; // idle, agitated, attack
+    const animParams = { bobSpeed: 1, bobAmount: 0.015, rockSpeed: 0.7, rockAmount: 0.02 };
+
+    // Scroll-driven rotation
+    const scrollState = { rotY: 0, camX: 0, camY: 0.1, camZ: 3 };
 
     const labelEl = document.getElementById('label');
     const labelNameEl = labelEl.querySelector('.label-name');
     const labelFactEl = labelEl.querySelector('.label-fact');
-
 
     // ════════════════════════════════════════════════════════════════
     // LOAD MODEL
     // ════════════════════════════════════════════════════════════════
     const loader = new GLTFLoader();
     loader.load('./wasp.glb', (gltf) => {
+      // Wrap model in a pivot for procedural animation
+      waspPivot = new THREE.Group();
       waspModel = gltf.scene;
-      scene.add(waspModel);
 
-      // Center
+      // Center the model
       const box = new THREE.Box3().setFromObject(waspModel);
       const center = box.getCenter(new THREE.Vector3());
       waspModel.position.sub(center);
 
-      // Animations
-      if (gltf.animations.length > 0) {
-        mixer = new THREE.AnimationMixer(waspModel);
-        gltf.animations.forEach((clip) => {
-          const action = mixer.clipAction(clip);
-          actions[clip.name] = action;
-          action.setLoop(THREE.LoopRepeat);
-        });
-        if (actions['Idle']) {
-          actions['Idle'].play();
-          currentAction = actions['Idle'];
+      // Scale to fit — normalize to ~1 unit
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 1.2 / maxDim;
+      waspModel.scale.setScalar(scale);
+
+      waspPivot.add(waspModel);
+      scene.add(waspPivot);
+
+      // Log mesh names for debugging
+      waspModel.traverse(child => {
+        if (child.isMesh) {
+          console.log('Mesh:', child.name, child.geometry.attributes.position.count, 'verts');
+          // Enable shadows
+          child.castShadow = true;
+          child.receiveShadow = true;
         }
-      }
+      });
 
       // Dismiss loading
       document.getElementById('loading').classList.add('fade-out');
       setTimeout(() => {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('controls').classList.add('visible');
-        setupScrollAnimations();
-        revealSections();
+        initScrollAnimations();
       }, 1000);
 
-    }, undefined, (err) => console.error('Load failed:', err));
+    }, (progress) => {
+      if (progress.total > 0) {
+        const pct = (progress.loaded / progress.total * 100).toFixed(0);
+        console.log(`Loading: ${pct}%`);
+      }
+    }, (err) => console.error('Load failed:', err));
 
 
     // ════════════════════════════════════════════════════════════════
-    // SCROLL-DRIVEN CAMERA + MODEL ROTATION
+    // PROCEDURAL ANIMATION — hovering, breathing, menacing
     // ════════════════════════════════════════════════════════════════
-    function setupScrollAnimations() {
-      // Scroll progress bar
+    function updateProceduralAnimation(elapsed) {
+      if (!waspPivot) return;
+
+      let bob, rock, sway;
+
+      if (animState === 'idle') {
+        bob = Math.sin(elapsed * animParams.bobSpeed * 2) * animParams.bobAmount;
+        rock = Math.sin(elapsed * animParams.rockSpeed) * animParams.rockAmount;
+        sway = Math.sin(elapsed * 0.5) * 0.008;
+      } else if (animState === 'agitated') {
+        // Faster, more erratic
+        bob = Math.sin(elapsed * 6) * 0.03 + Math.sin(elapsed * 11) * 0.01;
+        rock = Math.sin(elapsed * 4) * 0.06 + Math.cos(elapsed * 7) * 0.02;
+        sway = Math.sin(elapsed * 3) * 0.03;
+      } else { // attack
+        // Sharp lunge motion
+        const t = (elapsed % 2) / 2; // 2-second cycle
+        const lunge = t < 0.3 ? Math.sin(t / 0.3 * Math.PI) * -0.15 : 0;
+        bob = lunge * 0.3;
+        rock = Math.sin(elapsed * 8) * 0.04; // Vibration
+        sway = lunge;
+      }
+
+      // Apply to pivot (not model, so scroll rotation stays clean)
+      waspPivot.position.y = bob;
+      waspPivot.rotation.z = rock;
+      waspPivot.position.x = sway;
+    }
+
+
+    // ════════════════════════════════════════════════════════════════
+    // SCROLL ANIMATIONS
+    // ════════════════════════════════════════════════════════════════
+    function initScrollAnimations() {
+      // Progress bar
       ScrollTrigger.create({
         trigger: '#scroll-container',
         start: 'top top',
@@ -544,119 +568,52 @@
         }
       });
 
-      // Hero → Thorax: rotate model, camera moves right
-      gsap.to(cameraState, {
-        rotY: Math.PI * 0.3,
-        x: 0.3,
-        scrollTrigger: {
-          trigger: '[data-camera-target="thorax"]',
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1,
-        }
+      // Full rotation through scroll — one continuous timeline
+      const sections = ['thorax', 'petiole', 'stinger', 'eyes', 'wings'];
+      const rotations = [0.4, 0.9, 1.4, 2.0, 2.4];
+      const camPositions = [
+        { x: 0.3, y: 0.1, z: 2.8 },
+        { x: -0.3, y: 0, z: 2.6 },
+        { x: 0.2, y: -0.1, z: 2.2 },
+        { x: -0.2, y: 0.2, z: 2.0 },
+        { x: 0, y: 0.6, z: 2.8 },
+      ];
+
+      sections.forEach((target, i) => {
+        const el = document.querySelector(`[data-camera-target="${target}"]`);
+        if (!el) return;
+
+        gsap.to(scrollState, {
+          rotY: Math.PI * rotations[i],
+          camX: camPositions[i].x,
+          camY: camPositions[i].y,
+          camZ: camPositions[i].z,
+          scrollTrigger: { trigger: el, start: 'top bottom', end: 'center center', scrub: 1.5 }
+        });
       });
 
-      // Thorax → Petiole: rotate more, camera moves left
-      gsap.to(cameraState, {
-        rotY: Math.PI * 0.8,
-        x: -0.3,
-        scrollTrigger: {
-          trigger: '[data-camera-target="petiole"]',
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1,
-        }
-      });
-
-      // Petiole → Stinger: see the back, rotate further
-      gsap.to(cameraState, {
-        rotY: Math.PI * 1.2,
-        x: 0.2,
-        z: 1.8,
-        scrollTrigger: {
-          trigger: '[data-camera-target="stinger"]',
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1,
-        }
-      });
-
-      // Stinger → Eyes: swing back around to the front
-      gsap.to(cameraState, {
-        rotY: Math.PI * 1.9,
-        x: -0.2,
-        z: 1.6,
-        y: 0.15,
-        scrollTrigger: {
-          trigger: '[data-camera-target="eyes"]',
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1,
-        }
-      });
-
-      // Eyes → Wings: top-down angle
-      gsap.to(cameraState, {
-        rotY: Math.PI * 2.2,
-        y: 0.5,
-        z: 2.0,
-        x: 0,
-        scrollTrigger: {
-          trigger: '[data-camera-target="wings"]',
-          start: 'top bottom',
-          end: 'top center',
-          scrub: 1,
-        }
-      });
-    }
-
-
-    // ════════════════════════════════════════════════════════════════
-    // SECTION REVEAL ON SCROLL
-    // ════════════════════════════════════════════════════════════════
-    function revealSections() {
-      // Set all reveals to hidden initially
+      // Section text reveals
       gsap.set('.reveal', { opacity: 0, y: 50 });
-
       document.querySelectorAll('.reveal').forEach(el => {
         const section = el.closest('.section');
         if (!section) return;
-
         gsap.to(el, {
           opacity: 1, y: 0,
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 75%',
-            end: 'top 40%',
-            scrub: 0.5,
-          }
+          scrollTrigger: { trigger: section, start: 'top 75%', end: 'top 35%', scrub: 0.8 }
         });
-
-        // Fade out as section leaves
         gsap.to(el, {
-          opacity: 0, y: -30,
-          scrollTrigger: {
-            trigger: section,
-            start: 'bottom 60%',
-            end: 'bottom 30%',
-            scrub: 0.5,
-          }
+          opacity: 0, y: -20,
+          scrollTrigger: { trigger: section, start: 'bottom 55%', end: 'bottom 25%', scrub: 0.8 }
         });
       });
 
-      // Section numbers always visible when section is in view
+      gsap.set('.section-number', { opacity: 0 });
       document.querySelectorAll('.section-number').forEach(num => {
         const section = num.closest('.section');
         if (!section) return;
-        gsap.set(num, { opacity: 0 });
         gsap.to(num, {
-          opacity: 1,
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 80%',
-            end: 'top 50%',
-            scrub: 0.5,
-          }
+          opacity: 0.6,
+          scrollTrigger: { trigger: section, start: 'top 80%', end: 'top 50%', scrub: 0.5 }
         });
       });
     }
@@ -666,11 +623,16 @@
     // STATE SWITCHING
     // ════════════════════════════════════════════════════════════════
     function switchState(stateName) {
-      const newAction = actions[stateName];
-      if (!newAction || newAction === currentAction) return;
-      if (currentAction) currentAction.fadeOut(0.4);
-      newAction.reset().fadeIn(0.4).play();
-      currentAction = newAction;
+      const stateMap = { 'Idle': 'idle', 'Agitated': 'agitated', 'Attack': 'attack' };
+      animState = stateMap[stateName] || 'idle';
+
+      // Animate params for smooth transitions
+      if (animState === 'idle') {
+        gsap.to(animParams, { bobSpeed: 1, bobAmount: 0.015, rockSpeed: 0.7, rockAmount: 0.02, duration: 0.5 });
+      } else if (animState === 'agitated') {
+        gsap.to(animParams, { bobSpeed: 3, bobAmount: 0.03, rockSpeed: 2, rockAmount: 0.05, duration: 0.3 });
+      }
+
       document.querySelectorAll('.state-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.state === stateName);
       });
@@ -691,8 +653,9 @@
 
 
     // ════════════════════════════════════════════════════════════════
-    // HOTSPOT LABELS
+    // HOTSPOT LABELS — generic for any mesh name
     // ════════════════════════════════════════════════════════════════
+    const genericLabel = { name: 'VESPA ORIENTALIS', fact: 'The oriental hornet. Solar-powered predator.' };
     let currentLabelName = null;
 
     function updateLabels() {
@@ -701,22 +664,20 @@
       const intersects = raycaster.intersectObject(waspModel, true);
 
       if (intersects.length > 0) {
-        const data = labelData[intersects[0].object.name];
-        if (data) {
-          if (data.name !== currentLabelName) {
-            labelNameEl.textContent = data.name;
-            labelFactEl.textContent = data.fact;
-            currentLabelName = data.name;
-          }
-          const pt = intersects[0].point.clone().project(camera);
-          const x = (pt.x * 0.5 + 0.5) * window.innerWidth;
-          const y = (-pt.y * 0.5 + 0.5) * window.innerHeight;
-          labelEl.style.left = `${Math.min(x + 20, window.innerWidth - 320)}px`;
-          labelEl.style.top = `${Math.max(y - 70, 20)}px`;
-          labelEl.classList.add('visible');
-          document.body.style.cursor = 'pointer';
-          return;
+        const data = genericLabel;
+        if (data.name !== currentLabelName) {
+          labelNameEl.textContent = data.name;
+          labelFactEl.textContent = data.fact;
+          currentLabelName = data.name;
         }
+        const pt = intersects[0].point.clone().project(camera);
+        const x = (pt.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-pt.y * 0.5 + 0.5) * window.innerHeight;
+        labelEl.style.left = `${Math.min(x + 20, window.innerWidth - 320)}px`;
+        labelEl.style.top = `${Math.max(y - 70, 20)}px`;
+        labelEl.classList.add('visible');
+        document.body.style.cursor = 'pointer';
+        return;
       }
       labelEl.classList.remove('visible');
       currentLabelName = null;
@@ -732,24 +693,29 @@
       const delta = clock.getDelta();
       const elapsed = clock.getElapsedTime();
 
-      if (mixer) mixer.update(delta);
+      // Procedural animation
+      updateProceduralAnimation(elapsed);
 
-      // Apply scroll-driven camera + subtle mouse offset
+      // Scroll-driven model rotation + mouse influence
       if (waspModel) {
-        // Model rotation driven by scroll
-        waspModel.rotation.y += (cameraState.rotY - waspModel.rotation.y) * 0.06;
-
-        // Subtle mouse influence on top of scroll rotation
-        waspModel.rotation.x += (-mouse.y * 0.08 - waspModel.rotation.x) * 0.03;
+        const targetRotY = scrollState.rotY + mouse.x * 0.15;
+        const targetRotX = -mouse.y * 0.08;
+        waspModel.rotation.y += (targetRotY - waspModel.rotation.y) * 0.04;
+        waspModel.rotation.x += (targetRotX - waspModel.rotation.x) * 0.03;
       }
 
-      // Camera position from scroll state + idle sway
-      camera.position.x = cameraState.x + Math.sin(elapsed * 0.2) * 0.01 + mouse.x * 0.05;
-      camera.position.y = cameraState.y + Math.cos(elapsed * 0.15) * 0.008;
-      camera.position.z = cameraState.z;
-      camera.lookAt(cameraState.lookX, cameraState.lookY, cameraState.lookZ);
+      // Camera from scroll + subtle sway
+      camera.position.x = scrollState.camX + Math.sin(elapsed * 0.2) * 0.008 + mouse.x * 0.03;
+      camera.position.y = scrollState.camY + Math.cos(elapsed * 0.15) * 0.006;
+      camera.position.z = scrollState.camZ;
+      camera.lookAt(0, 0, 0);
 
+      // Particles
+      updateParticles();
+
+      // Labels
       updateLabels();
+
       renderer.render(scene, camera);
     }
     animate();
