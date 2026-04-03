@@ -42,6 +42,7 @@
     #header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:flex-start;padding:28px 40px;pointer-events:none}
     .header-left{opacity:0;transition:opacity 0.8s ease 0.3s}
     .header-left.visible{opacity:1}
+    .header-left.scrolled{opacity:0.3;transform:scale(0.85);transform-origin:top left;transition:opacity 0.5s,transform 0.5s}
     .header-label{font-family:'Geist Mono',monospace;font-size:11px;color:#52525B;letter-spacing:0.12em}
     .header-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;color:#F5F5F0;margin-top:2px;letter-spacing:-0.02em}
     .header-species{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:13px;color:#52525B;margin-top:1px}
@@ -64,7 +65,7 @@
     .section{min-height:100vh;display:flex;align-items:center;padding:0 clamp(32px,6vw,120px)}
     .section-hero{min-height:100vh;justify-content:flex-start}
 
-    .section-content{max-width:400px;opacity:0;transform:translateY(30px);background:rgba(9,9,11,0.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:28px 32px;border-left:1px solid rgba(184,150,78,0.15)}
+    .section-content{max-width:380px;opacity:0;transform:translateY(30px);background:rgba(9,9,11,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:32px 36px;border-left:2px solid rgba(184,150,78,0.2);border-radius:2px}
     .section-content.right{margin-left:auto}
 
     .section-overline{font-weight:500;font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:#B8964E;margin-bottom:10px}
@@ -77,9 +78,9 @@
 
     /* ── Anatomy labels (3D-anchored) ─────── */
     .anatomy-label{position:fixed;pointer-events:none;z-index:15;opacity:0;transition:opacity 0.4s ease;white-space:nowrap}
-    .anatomy-label.active{opacity:1}
-    .anatomy-label .a-title{font-weight:500;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#F5F5F0}
-    .anatomy-label .a-sub{font-size:9px;color:#52525B;padding-left:8px;border-left:1px solid #333;margin-top:3px}
+    .anatomy-label.active{opacity:0.7}
+    .anatomy-label .a-title{font-weight:500;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:#A1A1AA}
+    .anatomy-label .a-sub{font-size:8px;color:#52525B;padding-left:6px;border-left:1px solid #333;margin-top:2px}
   </style>
 </head>
 <body class="grain vignette">
@@ -402,6 +403,13 @@
       renderer.render(scene, camera);
     }
     animate();
+
+    // ── HEADER FADE ON SCROLL ─────────────────────────────────────
+    const headerLeft = document.querySelector('.header-left');
+    addEventListener('scroll', () => {
+      if (scrollY > 200) headerLeft?.classList.add('scrolled');
+      else headerLeft?.classList.remove('scrolled');
+    });
 
     // ── RESIZE ───────────────────────────────────────────────────
     addEventListener('resize', () => {
