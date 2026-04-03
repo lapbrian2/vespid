@@ -594,35 +594,72 @@
 
 
     // ════════════════════════════════════════════════════════════════
-    // PROCEDURAL ANIMATION — hovering, breathing, menacing
+    // PROCEDURAL ANIMATION — realistic hovering insect
     // ════════════════════════════════════════════════════════════════
+    // A real hovering wasp:
+    // - Constant micro-vibration from 200Hz wingbeat transferring to body
+    // - Slow breathing bob (abdomen expansion cycle)
+    // - Slight forward lean (flight posture, not level)
+    // - Lateral drift (never perfectly stationary)
+    // - Occasional micro-corrections (small jerks)
+    // - Legs dangle with subtle pendulum sway
+
+    let lastJerk = 0;
+    let jerkX = 0, jerkY = 0;
+
     function updateProceduralAnimation(elapsed) {
       if (!waspPivot) return;
 
-      let bob, rock, sway;
+      // ── Wing vibration transfer (high frequency, tiny amplitude)
+      const vibX = (Math.sin(elapsed * 47) + Math.sin(elapsed * 53)) * 0.0008;
+      const vibY = (Math.sin(elapsed * 41) + Math.cos(elapsed * 59)) * 0.0006;
+      const vibZ = Math.sin(elapsed * 43) * 0.0004;
 
-      if (animState === 'idle') {
-        bob = Math.sin(elapsed * animParams.bobSpeed * 2) * animParams.bobAmount;
-        rock = Math.sin(elapsed * animParams.rockSpeed) * animParams.rockAmount;
-        sway = Math.sin(elapsed * 0.5) * 0.008;
-      } else if (animState === 'agitated') {
-        // Faster, more erratic
-        bob = Math.sin(elapsed * 6) * 0.03 + Math.sin(elapsed * 11) * 0.01;
-        rock = Math.sin(elapsed * 4) * 0.06 + Math.cos(elapsed * 7) * 0.02;
-        sway = Math.sin(elapsed * 3) * 0.03;
-      } else { // attack
-        // Sharp lunge motion
-        const t = (elapsed % 2) / 2; // 2-second cycle
-        const lunge = t < 0.3 ? Math.sin(t / 0.3 * Math.PI) * -0.15 : 0;
-        bob = lunge * 0.3;
-        rock = Math.sin(elapsed * 8) * 0.04; // Vibration
-        sway = lunge;
+      // ── Breathing bob (slow, organic)
+      const breathe = Math.sin(elapsed * 1.2) * 0.006 + Math.sin(elapsed * 0.7) * 0.003;
+
+      // ── Lateral drift (very slow, figure-8 pattern)
+      const driftX = Math.sin(elapsed * 0.3) * 0.008 + Math.sin(elapsed * 0.17) * 0.004;
+      const driftZ = Math.cos(elapsed * 0.25) * 0.005;
+
+      // ── Micro-corrections (random small jerks every 2-4 seconds)
+      if (elapsed - lastJerk > 2 + Math.random() * 2) {
+        lastJerk = elapsed;
+        jerkX = (Math.random() - 0.5) * 0.006;
+        jerkY = (Math.random() - 0.5) * 0.004;
+      }
+      // Decay jerks
+      jerkX *= 0.95;
+      jerkY *= 0.95;
+
+      // ── State intensity multiplier
+      let intensity = 1.0;
+      let extraVib = 0;
+      let lunge = 0;
+
+      if (animState === 'agitated') {
+        intensity = 2.5;
+        extraVib = Math.sin(elapsed * 31) * 0.003;
+      } else if (animState === 'attack') {
+        intensity = 1.5;
+        const t = (elapsed % 2.5) / 2.5;
+        if (t < 0.15) {
+          lunge = Math.sin(t / 0.15 * Math.PI) * -0.04; // Sharp forward thrust
+        } else if (t < 0.25) {
+          lunge = -0.04 * (1 - (t - 0.15) / 0.1); // Snap back
+        }
+        extraVib = Math.sin(elapsed * 37) * 0.002;
       }
 
-      // Apply to pivot (not model, so scroll rotation stays clean)
-      waspPivot.position.y = bob;
-      waspPivot.rotation.z = rock;
-      waspPivot.position.x = sway;
+      // ── Apply to pivot
+      waspPivot.position.x = (driftX + vibX + jerkX + lunge) * intensity;
+      waspPivot.position.y = (breathe + vibY + jerkY) * intensity;
+      waspPivot.position.z = (driftZ + vibZ) * intensity + extraVib;
+
+      // ── Body attitude (slight forward lean + banking into drift)
+      waspPivot.rotation.x = -0.08 + vibY * 2; // Forward lean
+      waspPivot.rotation.z = -driftX * 0.8 * intensity; // Bank into drift direction
+      waspPivot.rotation.y = driftX * 0.3; // Yaw slightly into drift
     }
 
 
