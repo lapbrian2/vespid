@@ -185,6 +185,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 
     // ════════════════════════════════════════════════════════════════
@@ -313,20 +314,22 @@
 
 
     // ════════════════════════════════════════════════════════════════
-    // MOUSE — subtle camera orbit
+    // ORBIT CONTROLS — drag to rotate, scroll to zoom
     // ════════════════════════════════════════════════════════════════
-    const camBase = { x: 0, y: 0.05, z: 1.8 };
-    const camTarget = { x: 0, y: 0.05, z: 1.8 };
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.minDistance = 0.6;
+    controls.maxDistance = 4.0;
+    controls.target.set(0, 0, 0);
+    controls.autoRotate = false;
+    controls.rotateSpeed = 0.5;
+    controls.zoomSpeed = 0.8;
 
     window.addEventListener('mousemove', (e) => {
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-      // Mouse drives subtle camera orbit
-      camTarget.x = camBase.x + mouse.x * 0.15;
-      camTarget.y = camBase.y + mouse.y * 0.08;
-
-      // Raycaster for labels
       mouseVec.set(mouse.x, mouse.y);
     });
 
@@ -440,10 +443,7 @@
 
       updateAnimation(t);
 
-      // Smooth camera follow
-      camera.position.x += (camTarget.x - camera.position.x) * 0.04;
-      camera.position.y += (camTarget.y - camera.position.y) * 0.04;
-      camera.lookAt(0, 0, 0);
+      controls.update();
 
       // Particles
       const pp = pGeo.attributes.position.array;
