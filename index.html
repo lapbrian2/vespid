@@ -2,165 +2,105 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>VESPID</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Geist+Mono&display=swap" rel="stylesheet">
   <style>
-    @font-face {
-      font-family: 'Geist';
-      src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2');
-      font-weight: 400;
-    }
-    @font-face {
-      font-family: 'Geist';
-      src: url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
-      font-weight: 500;
-    }
+    @font-face { font-family:'Geist'; src:url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2'); font-weight:400; }
+    @font-face { font-family:'Geist'; src:url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2'); font-weight:500; }
 
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:auto}
+    body{background:#09090B;color:#F5F5F0;font-family:'Geist',sans-serif;overscroll-behavior:none}
 
-    body {
-      background: #09090B;
-      color: #F5F5F0;
-      font-family: 'Geist', sans-serif;
-      overflow: hidden;
-      height: 100vh;
-      cursor: default;
-    }
+    /* ── Loading ──────────────────────────── */
+    #loader{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;background:#09090B;transition:opacity 1s ease}
+    #loader.done{opacity:0;pointer-events:none}
+    .loader-text{font-weight:500;font-size:14px;letter-spacing:0.3em;text-transform:uppercase}
+    .loader-bar{width:120px;height:1px;background:#333;margin:16px 0;position:relative;overflow:hidden}
+    .loader-bar::after{content:'';position:absolute;inset:0;background:#F5F5F0;animation:slide 1.5s ease infinite}
+    @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    .loader-sub{font-family:'Geist Mono',monospace;font-size:12px;color:#71717A}
 
-    /* ── Loading ─────────────────────────────────────── */
-    #loading {
-      position: fixed; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      z-index: 200; background: #09090B;
-      transition: opacity 1s ease;
-    }
-    #loading.fade-out { opacity: 0; pointer-events: none; }
-    .loading-title {
-      font-weight: 500; font-size: 14px;
-      letter-spacing: 0.3em; text-transform: uppercase;
-    }
-    .loading-sub {
-      font-family: 'Geist Mono', monospace;
-      font-size: 12px; color: #71717A; margin-top: 8px;
-    }
-    .loading-bar {
-      width: 120px; height: 1px; background: #333;
-      margin: 16px 0; position: relative; overflow: hidden;
-    }
-    .loading-bar::after {
-      content: ''; position: absolute; inset: 0;
-      background: #F5F5F0;
-      animation: loadSlide 1.5s ease infinite;
-    }
-    @keyframes loadSlide {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
+    /* ── 3D Canvas (fixed background) ────── */
+    #canvas-wrap{position:fixed;inset:0;z-index:0}
+    canvas{display:block}
 
-    /* ── Canvas ──────────────────────────────────────── */
-    canvas { display: block; position: fixed; inset: 0; }
+    /* ── Film grain overlay ───────────────── */
+    .grain::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");background-repeat:repeat;background-size:200px;opacity:0.025;pointer-events:none;z-index:9998;mix-blend-mode:overlay}
 
-    /* ── Title — top left ────────────────────────────── */
-    #title {
-      position: fixed; top: 32px; left: 40px; z-index: 10;
-      opacity: 0; transition: opacity 0.8s ease 0.3s;
-    }
-    #title.visible { opacity: 1; }
-    .title-label {
-      font-family: 'Geist Mono', monospace;
-      font-size: 11px; color: #52525B; letter-spacing: 0.12em;
-    }
-    .title-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300; font-size: 28px;
-      color: #F5F5F0; margin-top: 4px;
-      letter-spacing: -0.02em;
-    }
-    .title-species {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300; font-style: italic;
-      font-size: 14px; color: #52525B; margin-top: 2px;
-    }
+    /* ── Vignette ──────────────────────────── */
+    .vignette::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(9,9,11,0.5) 100%);pointer-events:none;z-index:9997}
 
-    /* ── State buttons — bottom center ───────────────── */
-    #controls {
-      position: fixed; bottom: 32px; left: 50%;
-      transform: translateX(-50%);
-      display: flex; gap: 28px; z-index: 10;
-      opacity: 0; transition: opacity 0.8s ease 0.5s;
-    }
-    #controls.visible { opacity: 1; }
-    .state-btn {
-      font-family: 'Geist Mono', monospace;
-      font-size: 10px; letter-spacing: 0.15em;
-      text-transform: uppercase; color: #52525B;
-      background: none; border: none; cursor: pointer;
-      padding: 6px 0;
-      border-bottom: 1px solid transparent;
-      transition: color 0.3s, border-color 0.3s;
-    }
-    .state-btn:hover { color: #A1A1AA; }
-    .state-btn.active { color: #F5F5F0; border-bottom-color: #B8964E; }
+    /* ── Scroll content overlay ────────────── */
+    #content{position:relative;z-index:10;pointer-events:none}
+    #content>section{pointer-events:auto}
 
-    /* ── Anatomy labels ──────────────────────────────── */
-    #labels-container {
-      position: fixed; inset: 0;
-      pointer-events: none; z-index: 15;
-    }
-    .anatomy-label {
-      position: absolute;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-    .anatomy-label.visible { opacity: 1; }
-    .label-title {
-      font-weight: 500; font-size: 10px;
-      letter-spacing: 0.25em; text-transform: uppercase;
-      color: #F5F5F0; margin-bottom: 6px;
-    }
-    .label-items {
-      display: flex; flex-direction: column; gap: 2px;
-    }
-    .label-item {
-      font-weight: 400; font-size: 10px;
-      color: #71717A; letter-spacing: 0.05em;
-      padding-left: 10px;
-      border-left: 1px solid #333;
-    }
+    /* ── Header (fixed) ───────────────────── */
+    #header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:flex-start;padding:28px 40px;pointer-events:none}
+    .header-left{opacity:0;transition:opacity 0.8s ease 0.3s}
+    .header-left.visible{opacity:1}
+    .header-label{font-family:'Geist Mono',monospace;font-size:11px;color:#52525B;letter-spacing:0.12em}
+    .header-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;color:#F5F5F0;margin-top:2px;letter-spacing:-0.02em}
+    .header-species{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:13px;color:#52525B;margin-top:1px}
 
-    /* ── Nav arrows — bottom corners ─────────────────── */
-    .nav-link {
-      position: fixed; bottom: 32px; z-index: 10;
-      font-family: 'Geist Mono', monospace;
-      font-size: 10px; letter-spacing: 0.1em;
-      color: #52525B; text-decoration: none;
-      transition: color 0.3s;
-      opacity: 0; transition: opacity 0.8s ease 0.7s, color 0.3s;
-    }
-    .nav-link.visible { opacity: 1; }
-    .nav-link:hover { color: #A1A1AA; }
-    .nav-prev { left: 40px; }
-    .nav-next { right: 40px; }
+    /* ── State buttons (fixed bottom) ─────── */
+    #controls{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;gap:24px;z-index:100;opacity:0;transition:opacity 0.8s ease 0.5s;pointer-events:auto}
+    #controls.visible{opacity:1}
+    .state-btn{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#52525B;background:none;border:none;cursor:pointer;padding:6px 0;border-bottom:1px solid transparent;transition:color 0.3s,border-color 0.3s}
+    .state-btn:hover{color:#A1A1AA}
+    .state-btn.active{color:#F5F5F0;border-bottom-color:#B8964E}
+
+    /* ── Nav links (fixed bottom corners) ─── */
+    .nav-link{position:fixed;bottom:28px;z-index:100;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#52525B;text-decoration:none;transition:color 0.3s;pointer-events:auto;opacity:0;transition:opacity 0.8s ease 0.7s,color 0.3s}
+    .nav-link.visible{opacity:1}
+    .nav-link:hover{color:#A1A1AA}
+    .nav-prev{left:40px}
+    .nav-next{right:40px}
+
+    /* ── Scroll sections ──────────────────── */
+    .section{min-height:100vh;display:flex;align-items:center;padding:0 clamp(32px,6vw,120px)}
+    .section-hero{min-height:100vh;justify-content:flex-start}
+
+    .section-content{max-width:400px;opacity:0;transform:translateY(30px)}
+    .section-content.right{margin-left:auto}
+
+    .section-overline{font-weight:500;font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:#B8964E;margin-bottom:10px}
+    .section-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(28px,4vw,48px);line-height:1.15;letter-spacing:-0.02em;color:#F5F5F0;margin-bottom:14px}
+    .section-body{font-weight:400;font-size:14px;line-height:1.7;color:#A1A1AA;max-width:360px}
+    .section-number{font-family:'Geist Mono',monospace;font-size:11px;color:#3F3F46;letter-spacing:0.1em;position:absolute;top:32px;left:clamp(32px,6vw,120px);opacity:0}
+
+    /* ── Scroll progress ──────────────────── */
+    #progress{position:fixed;top:0;left:0;width:0;height:1px;background:#B8964E;z-index:200}
+
+    /* ── Anatomy labels (3D-anchored) ─────── */
+    .anatomy-label{position:fixed;pointer-events:none;z-index:15;opacity:0;transition:opacity 0.4s ease;white-space:nowrap}
+    .anatomy-label.active{opacity:1}
+    .anatomy-label .a-title{font-weight:500;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#F5F5F0}
+    .anatomy-label .a-sub{font-size:9px;color:#52525B;padding-left:8px;border-left:1px solid #333;margin-top:3px}
   </style>
 </head>
-<body>
+<body class="grain vignette">
 
-  <!-- Loading -->
-  <div id="loading">
-    <div class="loading-title">LOADING</div>
-    <div class="loading-bar"></div>
-    <div class="loading-sub">[01] VESPID</div>
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-text">LOADING</div>
+    <div class="loader-bar"></div>
+    <div class="loader-sub">[01] VESPID</div>
   </div>
 
-  <!-- Title -->
-  <div id="title">
-    <div class="title-label">[01] VESPID</div>
-    <div class="title-name">Vespid</div>
-    <div class="title-species">Vespa orientalis</div>
+  <!-- Progress -->
+  <div id="progress"></div>
+
+  <!-- Header -->
+  <div id="header">
+    <div class="header-left">
+      <div class="header-label">[01] VESPID</div>
+      <div class="header-title">Vespid</div>
+      <div class="header-species">Vespa orientalis</div>
+    </div>
   </div>
 
   <!-- State buttons -->
@@ -170,139 +110,155 @@
     <button class="state-btn" data-state="fly">Fly</button>
   </div>
 
-  <!-- Anatomy labels — anchored to 3D positions -->
-  <div id="labels-container">
-    <div class="anatomy-label" data-anchor="mandibles">
-      <div class="label-title">Mandibula</div>
-      <div class="label-items">
-        <div class="label-item">Mastication &amp; manipulation</div>
-        <div class="label-item">Prey processing</div>
-      </div>
-    </div>
-    <div class="anatomy-label" data-anchor="thorax">
-      <div class="label-title">Thorax</div>
-      <div class="label-items">
-        <div class="label-item">Indirect flight muscles</div>
-        <div class="label-item">Wing articulation</div>
-      </div>
-    </div>
-    <div class="anatomy-label" data-anchor="abdomen">
-      <div class="label-title">Abdomen</div>
-      <div class="label-items">
-        <div class="label-item">Venom sac + stinger</div>
-        <div class="label-item">Tracheal system</div>
-      </div>
-    </div>
-  </div>
-
   <!-- Nav -->
   <a href="#" class="nav-link nav-prev">&lt;Prev</a>
   <a href="#" class="nav-link nav-next">Next&gt;</a>
 
-  <script type="importmap">
-    { "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-    }}
-  </script>
+  <!-- 3D Canvas -->
+  <div id="canvas-wrap"></div>
+
+  <!-- Anatomy labels -->
+  <div class="anatomy-label" id="label-mandibles"><div class="a-title">Mandibula</div><div class="a-sub">Mastication &amp; manipulation</div><div class="a-sub">Prey processing</div></div>
+  <div class="anatomy-label" id="label-thorax"><div class="a-title">Thorax</div><div class="a-sub">Indirect flight muscles</div><div class="a-sub">Wing articulation</div></div>
+  <div class="anatomy-label" id="label-abdomen"><div class="a-title">Abdomen</div><div class="a-sub">Venom sac + stinger</div><div class="a-sub">Tracheal system</div></div>
+
+  <!-- Scroll content -->
+  <div id="content">
+    <section class="section section-hero"><div style="height:100vh"></div></section>
+
+    <section class="section" id="sec-thorax">
+      <span class="section-number">[02]</span>
+      <div class="section-content">
+        <div class="section-overline">Thorax</div>
+        <h2 class="section-title">Pure flight muscle</h2>
+        <p class="section-body">Three fused segments house the indirect flight muscles that power both wing pairs. The thorax is the engine that makes a wasp airborne in milliseconds.</p>
+      </div>
+    </section>
+
+    <section class="section" id="sec-petiole">
+      <span class="section-number">[03]</span>
+      <div class="section-content right">
+        <div class="section-overline">Petiole</div>
+        <h2 class="section-title">The wasp waist</h2>
+        <p class="section-body">The narrow petiole connecting thorax to abdomen allows the abdomen to curl underneath for stinging. Form follows function.</p>
+      </div>
+    </section>
+
+    <section class="section" id="sec-stinger">
+      <span class="section-number">[04]</span>
+      <div class="section-content">
+        <div class="section-overline">Stinger</div>
+        <h2 class="section-title">Smooth. Reusable.</h2>
+        <p class="section-body">Unlike a bee's barbed stinger, a wasp's ovipositor is smooth — it can sting repeatedly without self-destructing. The venom is alkaline, designed to paralyze prey.</p>
+      </div>
+    </section>
+
+    <section class="section" id="sec-eyes">
+      <span class="section-number">[05]</span>
+      <div class="section-content right">
+        <div class="section-overline">Compound Eyes</div>
+        <h2 class="section-title">You were seen first</h2>
+        <p class="section-body">Nearly 360-degree vision from thousands of hexagonal lenses. Wasps detect ultraviolet patterns invisible to humans. They track movement faster than any vertebrate eye.</p>
+      </div>
+    </section>
+
+    <section class="section" id="sec-wings">
+      <span class="section-number">[06]</span>
+      <div class="section-content">
+        <div class="section-overline">Wings</div>
+        <h2 class="section-title">40 beats per second</h2>
+        <p class="section-body">Two pairs of wings, hooked together mid-flight by tiny hamuli. Forewings generate lift, hindwings stabilize. At rest, they fold flat — ready to deploy in an instant.</p>
+      </div>
+    </section>
+
+    <section class="section" style="min-height:40vh"></section>
+  </div>
+
+  <!-- GSAP -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+    gsap.registerPlugin(ScrollTrigger);
 
-    // ════════════════════════════════════════════════════════════════
-    // SCENE
-    // ════════════════════════════════════════════════════════════════
+    // ── SCENE ────────────────────────────────────────────────────
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x06060a, 0.4);
+    scene.fog = new THREE.FogExp2(0x06060a, 0.3);
 
-    const camera = new THREE.PerspectiveCamera(
-      30, window.innerWidth / window.innerHeight, 0.01, 50
-    );
+    const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.01, 50);
     camera.position.set(0, 0.1, 2.8);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0x09090B);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.5;
-    document.body.appendChild(renderer.domElement);
+    document.getElementById('canvas-wrap').appendChild(renderer.domElement);
 
+    // ── CONTROLS ─────────────────────────────────────────────────
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.enablePan = false;
+    controls.minDistance = 1.0;
+    controls.maxDistance = 5.0;
+    controls.rotateSpeed = 0.4;
+    controls.zoomSpeed = 0.6;
+    controls.target.set(0, 0, 0);
 
-    // ════════════════════════════════════════════════════════════════
-    // LIGHTING
-    // ════════════════════════════════════════════════════════════════
+    // ── LIGHTING ─────────────────────────────────────────────────
     scene.add(new THREE.AmbientLight(0x333344, 0.6));
-
     const key = new THREE.DirectionalLight(0xFFE4B5, 2.5);
-    key.position.set(4, 4, 5);
-    scene.add(key);
-
+    key.position.set(4, 4, 5); scene.add(key);
     const rim = new THREE.DirectionalLight(0x4466CC, 1.0);
-    rim.position.set(-4, 1, -4);
-    scene.add(rim);
-
+    rim.position.set(-4, 1, -4); scene.add(rim);
     const fill = new THREE.DirectionalLight(0xFFDDBB, 0.4);
-    fill.position.set(-2, -2, 3);
-    scene.add(fill);
+    fill.position.set(-2, -2, 3); scene.add(fill);
 
-    const top = new THREE.DirectionalLight(0xFFFFEE, 0.3);
-    top.position.set(0, 5, 0);
-    scene.add(top);
-
-    // Environment map
+    // Environment
     const pmrem = new THREE.PMREMGenerator(renderer);
-    const envS = new THREE.Scene();
-    envS.add(new THREE.Mesh(
-      new THREE.SphereGeometry(10, 32, 16),
-      new THREE.MeshBasicMaterial({ color: 0x0a0a12, side: THREE.BackSide })
-    ));
-    const sg = new THREE.SphereGeometry(0.5, 8, 8);
-    const s1 = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }));
-    s1.position.set(4, 4, 4); envS.add(s1);
-    const s2 = new THREE.Mesh(sg.clone(), new THREE.MeshBasicMaterial({ color: 0x3355AA }));
-    s2.position.set(-4, -1, -3); envS.add(s2);
-    scene.environment = pmrem.fromScene(envS, 0.04).texture;
+    const es = new THREE.Scene();
+    es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x0a0a12,side:THREE.BackSide})));
+    const sg = new THREE.SphereGeometry(0.5,8,8);
+    const s1 = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xFFFFFF}));
+    s1.position.set(4,4,4); es.add(s1);
+    const s2 = new THREE.Mesh(sg.clone(), new THREE.MeshBasicMaterial({color:0x3355AA}));
+    s2.position.set(-4,-1,-3); es.add(s2);
+    scene.environment = pmrem.fromScene(es, 0.04).texture;
     pmrem.dispose();
 
-
-    // ════════════════════════════════════════════════════════════════
-    // PARTICLES — floating dust motes
-    // ════════════════════════════════════════════════════════════════
+    // ── PARTICLES ────────────────────────────────────────────────
     const PC = 300;
     const pGeo = new THREE.BufferGeometry();
-    const pPos = new Float32Array(PC * 3);
-    const pVel = new Float32Array(PC * 3);
-    for (let i = 0; i < PC; i++) {
-      pPos[i*3]   = (Math.random()-0.5) * 5;
-      pPos[i*3+1] = (Math.random()-0.5) * 3;
-      pPos[i*3+2] = (Math.random()-0.5) * 5;
-      pVel[i*3]   = (Math.random()-0.5) * 0.0008;
-      pVel[i*3+1] = Math.random() * 0.0005 + 0.0001;
-      pVel[i*3+2] = (Math.random()-0.5) * 0.0008;
+    const pp = new Float32Array(PC*3), pv = new Float32Array(PC*3);
+    for(let i=0;i<PC;i++){
+      pp[i*3]=(Math.random()-.5)*5; pp[i*3+1]=(Math.random()-.5)*3; pp[i*3+2]=(Math.random()-.5)*5;
+      pv[i*3]=(Math.random()-.5)*.0006; pv[i*3+1]=Math.random()*.0004+.0001; pv[i*3+2]=(Math.random()-.5)*.0006;
     }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
     scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({
-      color: 0xB8964E, size: 0.006, transparent: true, opacity: 0.25,
-      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+      color:0xB8964E, size:0.005, transparent:true, opacity:0.2,
+      blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true
     })));
 
-
-    // ════════════════════════════════════════════════════════════════
-    // STATE
-    // ════════════════════════════════════════════════════════════════
-    let waspModel = null;
-    let waspPivot = null;
+    // ── STATE ────────────────────────────────────────────────────
+    let waspModel = null, waspPivot = null;
     const clock = new THREE.Clock();
-    const mouse = { x: 0, y: 0 };
     let animState = 'idle';
 
+    // Simple 2D noise approximation for organic movement
+    function noise(t) {
+      return Math.sin(t*1.1) * 0.3 + Math.sin(t*2.3) * 0.2 + Math.sin(t*4.7) * 0.1 +
+             Math.sin(t*0.7) * 0.25 + Math.cos(t*3.1) * 0.15;
+    }
 
-    // ════════════════════════════════════════════════════════════════
-    // LOAD MODEL
-    // ════════════════════════════════════════════════════════════════
+    // ── LOAD MODEL ───────────────────────────────────────────────
     new GLTFLoader().load('./wasp.glb', (gltf) => {
       waspPivot = new THREE.Group();
       waspModel = gltf.scene;
@@ -312,195 +268,146 @@
       waspModel.position.sub(center);
 
       const size = box.getSize(new THREE.Vector3());
-      const scale = 2.2 / Math.max(size.x, size.y, size.z);
-      waspModel.scale.setScalar(scale);
+      waspModel.scale.setScalar(1.8 / Math.max(size.x, size.y, size.z));
 
       waspPivot.add(waspModel);
       scene.add(waspPivot);
 
-      labelsReady = true;
-
       // Reveal UI
-      document.getElementById('loading').classList.add('fade-out');
+      document.getElementById('loader').classList.add('done');
       setTimeout(() => {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('title').classList.add('visible');
+        document.getElementById('loader').style.display = 'none';
+        document.querySelector('.header-left').classList.add('visible');
         document.getElementById('controls').classList.add('visible');
         document.querySelectorAll('.nav-link').forEach(l => l.classList.add('visible'));
+        initScroll();
       }, 1000);
     });
 
+    // ── ANIMATION — noise-based, not sine-bouncing ───────────────
+    function updateAnimation(t) {
+      if (!waspPivot) return;
 
-    // ════════════════════════════════════════════════════════════════
-    // ORBIT CONTROLS — drag to rotate, scroll to zoom
-    // ════════════════════════════════════════════════════════════════
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.enablePan = false;
-    controls.minDistance = 1.0;
-    controls.maxDistance = 6.0;
-    controls.target.set(0, 0, 0);
-    controls.autoRotate = false;
-    controls.rotateSpeed = 0.5;
-    controls.zoomSpeed = 0.8;
+      const speed = animState === 'fly' ? 1.8 : animState === 'hover' ? 1.0 : 0.3;
+      const amp = animState === 'fly' ? 0.02 : animState === 'hover' ? 0.012 : 0.003;
 
-    window.addEventListener('mousemove', (e) => {
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      // Noise-driven position (organic, non-periodic)
+      waspPivot.position.x = noise(t * speed) * amp;
+      waspPivot.position.y = noise(t * speed * 0.8 + 100) * amp;
+      waspPivot.position.z = noise(t * speed * 0.6 + 200) * amp * 0.5;
+
+      // Attitude — lean into movement direction
+      const lean = animState === 'idle' ? 0.01 : animState === 'hover' ? 0.04 : 0.08;
+      waspPivot.rotation.x = -lean + noise(t * speed * 0.5 + 50) * lean * 0.3;
+      waspPivot.rotation.z = noise(t * speed * 0.7 + 150) * lean * 0.5;
+    }
+
+    // ── SCROLL — camera + section reveals ────────────────────────
+    // Proxy for scroll-driven camera (proxy pattern from skill)
+    const camProxy = { x: 0, y: 0.1, z: 2.8 };
+
+    function initScroll() {
+      // Progress bar
+      gsap.to('#progress', {
+        width: '100%', ease: 'none',
+        scrollTrigger: { trigger: '#content', start: 'top top', end: 'bottom bottom', scrub: true }
+      });
+
+      // Camera moves per section (subtle, not dramatic)
+      const camTL = gsap.timeline({
+        scrollTrigger: { trigger: '#content', start: 'top top', end: 'bottom bottom', scrub: 1.5 }
+      });
+      camTL.to(camProxy, { x: 0.3, y: 0.15, z: 2.5, duration: 1 })   // thorax
+           .to(camProxy, { x: -0.2, y: 0.0, z: 2.6, duration: 1 })    // petiole
+           .to(camProxy, { x: 0.15, y: -0.05, z: 2.3, duration: 1 })   // stinger
+           .to(camProxy, { x: -0.15, y: 0.2, z: 2.2, duration: 1 })    // eyes
+           .to(camProxy, { x: 0, y: 0.35, z: 2.6, duration: 1 });      // wings
+
+      // Section content reveals (once, clean)
+      document.querySelectorAll('.section-content').forEach(el => {
+        gsap.to(el, {
+          opacity: 1, y: 0, duration: 0.8, ease: 'power2.out',
+          scrollTrigger: { trigger: el.closest('.section'), start: 'top 75%', once: true }
+        });
+      });
+
+      // Section numbers
+      document.querySelectorAll('.section-number').forEach(num => {
+        gsap.to(num, {
+          opacity: 0.4, duration: 0.5,
+          scrollTrigger: { trigger: num.closest('.section'), start: 'top 80%', once: true }
+        });
+      });
+    }
+
+    // ── STATE BUTTONS ────────────────────────────────────────────
+    document.querySelectorAll('.state-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        animState = btn.dataset.state;
+        document.querySelectorAll('.state-btn').forEach(b => b.classList.toggle('active', b === btn));
+      });
     });
 
-
-    // ════════════════════════════════════════════════════════════════
-    // ANATOMY LABELS — anchored to 3D world positions
-    // ════════════════════════════════════════════════════════════════
-    // These are approximate positions relative to the model center
-    // Adjusted after model loads based on bounding box
+    // ── ANATOMY LABELS — 3D anchored ─────────────────────────────
     const labelAnchors = {
-      mandibles: new THREE.Vector3(0.35, -0.02, 0.1),
-      thorax:    new THREE.Vector3(0, 0.12, -0.05),
-      abdomen:   new THREE.Vector3(-0.3, 0.0, -0.05),
+      mandibles: { el: document.getElementById('label-mandibles'), pos: new THREE.Vector3(0.35, -0.02, 0.1) },
+      thorax:    { el: document.getElementById('label-thorax'),    pos: new THREE.Vector3(0, 0.15, -0.05) },
+      abdomen:   { el: document.getElementById('label-abdomen'),   pos: new THREE.Vector3(-0.3, 0.0, -0.05) },
     };
 
-    const labelElements = {};
-    document.querySelectorAll('.anatomy-label').forEach(el => {
-      labelElements[el.dataset.anchor] = el;
-    });
-
-    let labelsReady = false;
-
     function updateLabels() {
-      if (!waspModel || !labelsReady) return;
-
-      for (const [key, anchor] of Object.entries(labelAnchors)) {
-        const el = labelElements[key];
-        if (!el) continue;
-
-        // Transform anchor by wasp pivot + model
-        const worldPos = anchor.clone();
-        waspPivot.localToWorld(worldPos);
-
-        // Project to screen
-        const projected = worldPos.clone().project(camera);
-        const sx = (projected.x * 0.5 + 0.5) * window.innerWidth;
-        const sy = (-projected.y * 0.5 + 0.5) * window.innerHeight;
-
-        // Check if visible (in front of camera)
-        if (projected.z < 1) {
-          el.style.left = `${sx}px`;
-          el.style.top = `${sy}px`;
-          el.classList.add('visible');
+      if (!waspPivot) return;
+      for (const {el, pos} of Object.values(labelAnchors)) {
+        const wp = pos.clone();
+        waspPivot.localToWorld(wp);
+        const p = wp.project(camera);
+        if (p.z < 1) {
+          el.style.left = `${(p.x*.5+.5)*innerWidth}px`;
+          el.style.top = `${(-p.y*.5+.5)*innerHeight}px`;
+          el.classList.add('active');
         } else {
-          el.classList.remove('visible');
+          el.classList.remove('active');
         }
       }
     }
 
-
-    // ════════════════════════════════════════════════════════════════
-    // STATE BUTTONS
-    // ════════════════════════════════════════════════════════════════
-    document.querySelectorAll('.state-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        animState = btn.dataset.state;
-        document.querySelectorAll('.state-btn').forEach(b =>
-          b.classList.toggle('active', b === btn)
-        );
-      });
-    });
-
-
-    // ════════════════════════════════════════════════════════════════
-    // ANIMATION — three distinct behaviors
-    // ════════════════════════════════════════════════════════════════
-
-    function updateAnimation(t) {
-      if (!waspPivot) return;
-
-      if (animState === 'idle') {
-        // IDLE: perched/resting. Barely moves. Occasional tiny shift.
-        const breathe = Math.sin(t * 0.8) * 0.002;
-        waspPivot.position.y = breathe;
-        waspPivot.position.x = Math.sin(t * 0.2) * 0.001;
-        waspPivot.rotation.x = -0.02;
-        waspPivot.rotation.z = 0;
-        waspPivot.rotation.y = 0;
-
-      } else if (animState === 'hover') {
-        // HOVER: airborne, smooth figure-8 drift, body tilted forward
-        const driftX = Math.sin(t * 0.4) * 0.06;
-        const driftY = Math.sin(t * 0.6) * 0.02 + Math.sin(t * 1.1) * 0.008;
-        const driftZ = Math.cos(t * 0.35) * 0.03;
-
-        waspPivot.position.x = driftX;
-        waspPivot.position.y = driftY;
-        waspPivot.position.z = driftZ;
-
-        // Bank into the drift direction (body tilts the way it's moving)
-        waspPivot.rotation.z = -Math.cos(t * 0.4) * 0.4 * 0.08;
-        waspPivot.rotation.x = -0.12; // Forward lean — flight posture
-        waspPivot.rotation.y = Math.cos(t * 0.4) * 0.04; // Slight yaw into drift
-
-      } else if (animState === 'fly') {
-        // FLY: fast orbiting flight path, banking turns, speed
-        const radius = 0.15;
-        const speed = 0.7;
-        const flightX = Math.sin(t * speed) * radius;
-        const flightZ = Math.cos(t * speed) * radius * 0.6;
-        const flightY = Math.sin(t * speed * 2) * 0.03; // Altitude changes
-
-        waspPivot.position.x = flightX;
-        waspPivot.position.y = flightY;
-        waspPivot.position.z = flightZ;
-
-        // Bank hard into turns — this is what makes it look like real flight
-        const bankAngle = -Math.cos(t * speed) * 0.25;
-        const pitch = -0.18; // Nose down in flight
-        const yaw = -Math.cos(t * speed) * 0.15; // Face direction of travel
-
-        waspPivot.rotation.x = pitch;
-        waspPivot.rotation.z = bankAngle;
-        waspPivot.rotation.y = yaw;
-      }
-    }
-
-
-    // ════════════════════════════════════════════════════════════════
-    // RENDER LOOP
-    // ════════════════════════════════════════════════════════════════
+    // ── RENDER LOOP ──────────────────────────────────────────────
     function animate() {
       requestAnimationFrame(animate);
       const t = clock.getElapsedTime();
 
       updateAnimation(t);
-
       controls.update();
 
-      // Particles
-      const pp = pGeo.attributes.position.array;
-      for (let i = 0; i < PC; i++) {
-        pp[i*3]   += pVel[i*3] + Math.sin(t+i)*0.00003;
-        pp[i*3+1] += pVel[i*3+1];
-        pp[i*3+2] += pVel[i*3+2];
-        if (Math.abs(pp[i*3]) > 2.5) pp[i*3] *= -0.9;
-        if (pp[i*3+1] > 1.5) pp[i*3+1] = -1.5;
-        if (Math.abs(pp[i*3+2]) > 2.5) pp[i*3+2] *= -0.9;
+      // Apply scroll proxy to camera (subtle shifts, not overriding orbit)
+      // Only apply when user isn't actively dragging
+      if (!controls.isDragging) {
+        camera.position.x += (camProxy.x - camera.position.x) * 0.02;
+        camera.position.y += (camProxy.y - camera.position.y) * 0.02;
+        // Don't override Z — let orbit controls handle zoom
       }
-      pGeo.attributes.position.needsUpdate = true;
 
       updateLabels();
+
+      // Particles
+      const pa = pGeo.attributes.position.array;
+      for(let i=0;i<PC;i++){
+        pa[i*3]+=pv[i*3]; pa[i*3+1]+=pv[i*3+1]; pa[i*3+2]+=pv[i*3+2];
+        if(Math.abs(pa[i*3])>2.5)pa[i*3]*=-.9;
+        if(pa[i*3+1]>1.5)pa[i*3+1]=-1.5;
+        if(Math.abs(pa[i*3+2])>2.5)pa[i*3+2]*=-.9;
+      }
+      pGeo.attributes.position.needsUpdate=true;
+
       renderer.render(scene, camera);
     }
     animate();
 
-
-    // ════════════════════════════════════════════════════════════════
-    // RESIZE
-    // ════════════════════════════════════════════════════════════════
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
+    // ── RESIZE ───────────────────────────────────────────────────
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth/innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(innerWidth, innerHeight);
     });
   </script>
 </body>
