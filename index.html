@@ -356,9 +356,9 @@
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(
-      35, window.innerWidth / window.innerHeight, 0.01, 100
+      30, window.innerWidth / window.innerHeight, 0.01, 100
     );
-    camera.position.set(0, 0.1, 3);
+    camera.position.set(0.15, 0.05, 1.6);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -412,44 +412,105 @@
     pmremGenerator.dispose();
 
     // ════════════════════════════════════════════════════════════════
-    // DUST PARTICLES — atmospheric floating motes
+    // WORLD BUILDING — fog, ground, particles, atmosphere
     // ════════════════════════════════════════════════════════════════
-    const PARTICLE_COUNT = 200;
+
+    // Exponential fog — creates depth and atmosphere
+    scene.fog = new THREE.FogExp2(0x080810, 0.35);
+
+    // Ground plane — subtle reflective surface below the wasp
+    const groundGeo = new THREE.PlaneGeometry(20, 20);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x0a0a0f,
+      roughness: 0.85,
+      metalness: 0.1,
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.6;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Dust particles — layered system
+    const PARTICLE_COUNT = 500;
     const particleGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(PARTICLE_COUNT * 3);
     const velocities = new Float32Array(PARTICLE_COUNT * 3);
+    const sizes = new Float32Array(PARTICLE_COUNT);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 6;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 4;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
-      velocities[i * 3] = (Math.random() - 0.5) * 0.002;
-      velocities[i * 3 + 1] = Math.random() * 0.001 + 0.0005;
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.002;
+      positions[i * 3] = (Math.random() - 0.5) * 4;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 3;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 4;
+      velocities[i * 3] = (Math.random() - 0.5) * 0.001;
+      velocities[i * 3 + 1] = Math.random() * 0.0008 + 0.0002;
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.001;
+      sizes[i] = Math.random() * 0.015 + 0.003;
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particleGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
     const particleMat = new THREE.PointsMaterial({
       color: 0xB8964E,
-      size: 0.008,
+      size: 0.012,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.3,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
+      sizeAttenuation: true,
     });
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
 
-    function updateParticles() {
+    // Secondary particle layer — larger, slower, more atmospheric
+    const MOTE_COUNT = 80;
+    const moteGeo = new THREE.BufferGeometry();
+    const motePositions = new Float32Array(MOTE_COUNT * 3);
+    const moteVelocities = new Float32Array(MOTE_COUNT * 3);
+    for (let i = 0; i < MOTE_COUNT; i++) {
+      motePositions[i * 3] = (Math.random() - 0.5) * 5;
+      motePositions[i * 3 + 1] = (Math.random() - 0.5) * 3;
+      motePositions[i * 3 + 2] = (Math.random() - 0.5) * 5;
+      moteVelocities[i * 3] = (Math.random() - 0.5) * 0.0005;
+      moteVelocities[i * 3 + 1] = Math.random() * 0.0003;
+      moteVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.0005;
+    }
+    moteGeo.setAttribute('position', new THREE.BufferAttribute(motePositions, 3));
+    const moteMat = new THREE.PointsMaterial({
+      color: 0xFFEEDD,
+      size: 0.025,
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true,
+    });
+    const motes = new THREE.Points(moteGeo, moteMat);
+    scene.add(motes);
+
+    function updateParticles(elapsed) {
+      // Dust
       const pos = particleGeo.attributes.position.array;
       for (let i = 0; i < PARTICLE_COUNT; i++) {
-        pos[i * 3] += velocities[i * 3];
+        pos[i * 3] += velocities[i * 3] + Math.sin(elapsed + i) * 0.00005;
         pos[i * 3 + 1] += velocities[i * 3 + 1];
-        pos[i * 3 + 2] += velocities[i * 3 + 2];
-        // Reset particles that drift too far
-        if (Math.abs(pos[i * 3]) > 3) pos[i * 3] *= -0.9;
-        if (pos[i * 3 + 1] > 2) pos[i * 3 + 1] = -2;
-        if (Math.abs(pos[i * 3 + 2]) > 3) pos[i * 3 + 2] *= -0.9;
+        pos[i * 3 + 2] += velocities[i * 3 + 2] + Math.cos(elapsed + i) * 0.00005;
+        if (Math.abs(pos[i * 3]) > 2) pos[i * 3] *= -0.95;
+        if (pos[i * 3 + 1] > 1.5) pos[i * 3 + 1] = -1.5;
+        if (Math.abs(pos[i * 3 + 2]) > 2) pos[i * 3 + 2] *= -0.95;
       }
       particleGeo.attributes.position.needsUpdate = true;
+
+      // Motes
+      const mp = moteGeo.attributes.position.array;
+      for (let i = 0; i < MOTE_COUNT; i++) {
+        mp[i * 3] += moteVelocities[i * 3] + Math.sin(elapsed * 0.3 + i * 0.5) * 0.0001;
+        mp[i * 3 + 1] += moteVelocities[i * 3 + 1];
+        mp[i * 3 + 2] += moteVelocities[i * 3 + 2];
+        if (Math.abs(mp[i * 3]) > 2.5) mp[i * 3] *= -0.9;
+        if (mp[i * 3 + 1] > 1.5) mp[i * 3 + 1] = -1.5;
+        if (Math.abs(mp[i * 3 + 2]) > 2.5) mp[i * 3 + 2] *= -0.9;
+      }
+      moteGeo.attributes.position.needsUpdate = true;
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -466,7 +527,7 @@
     const animParams = { bobSpeed: 1, bobAmount: 0.015, rockSpeed: 0.7, rockAmount: 0.02 };
 
     // Scroll-driven rotation
-    const scrollState = { rotY: 0, camX: 0, camY: 0.1, camZ: 3 };
+    const scrollState = { rotY: 0, camX: 0.15, camY: 0.05, camZ: 1.6 };
 
     const labelEl = document.getElementById('label');
     const labelNameEl = labelEl.querySelector('.label-name');
@@ -486,10 +547,10 @@
       const center = box.getCenter(new THREE.Vector3());
       waspModel.position.sub(center);
 
-      // Scale to fit — normalize to ~1 unit
+      // Scale to DOMINATE the viewport
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
-      const scale = 1.2 / maxDim;
+      const scale = 2.0 / maxDim;
       waspModel.scale.setScalar(scale);
 
       waspPivot.add(waspModel);
@@ -570,13 +631,13 @@
 
       // Full rotation through scroll — one continuous timeline
       const sections = ['thorax', 'petiole', 'stinger', 'eyes', 'wings'];
-      const rotations = [0.4, 0.9, 1.4, 2.0, 2.4];
+      const rotations = [0.35, 0.8, 1.3, 1.85, 2.3];
       const camPositions = [
-        { x: 0.3, y: 0.1, z: 2.8 },
-        { x: -0.3, y: 0, z: 2.6 },
-        { x: 0.2, y: -0.1, z: 2.2 },
-        { x: -0.2, y: 0.2, z: 2.0 },
-        { x: 0, y: 0.6, z: 2.8 },
+        { x: 0.4, y: 0.05, z: 1.5 },   // Thorax — slight right
+        { x: -0.35, y: 0, z: 1.4 },     // Petiole — left side
+        { x: 0.2, y: -0.05, z: 1.3 },   // Stinger — close, below
+        { x: -0.2, y: 0.15, z: 1.2 },   // Eyes — face-on, close
+        { x: 0, y: 0.4, z: 1.6 },       // Wings — above
       ];
 
       sections.forEach((target, i) => {
@@ -711,7 +772,7 @@
       camera.lookAt(0, 0, 0);
 
       // Particles
-      updateParticles();
+      updateParticles(elapsed);
 
       // Labels
       updateLabels();
