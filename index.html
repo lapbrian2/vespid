@@ -22,21 +22,18 @@
     canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;touch-action:none}
 
     /* ── Header ────────────────────────── */
-    #header{position:fixed;top:16px;left:20px;z-index:10;opacity:0;transition:opacity 0.6s}
-    #header.visible{opacity:1}
+    #header{position:fixed;top:16px;left:20px;z-index:10;opacity:0}
     .h-lab{font-size:1.6em;font-weight:500;color:#333;letter-spacing:1px;text-decoration:none;display:inline-block}
     .h-copy{font-size:1.1em;font-weight:300;color:#888;letter-spacing:4px;text-transform:uppercase;margin-top:2px}
 
     /* ── Picker ─────────────────────────── */
-    #picker{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:10;opacity:0;transition:opacity 0.6s}
-    #picker.visible{opacity:1}
+    #picker{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:10;opacity:0}
     .pick-btn{font-size:1.3em;font-weight:300;color:#333;letter-spacing:5px;text-transform:uppercase;background:rgba(255,255,255,0.7);border:none;cursor:pointer;padding:5px 8px;opacity:0.45;transition:opacity 0.3s}
     .pick-btn.active{opacity:1}
     .pick-btn:hover{opacity:0.75}
 
     /* ── Nav ──────────────────────────── */
-    .nav-btn{position:fixed;bottom:16px;z-index:10;font-size:1.3em;font-weight:300;color:#333;letter-spacing:5px;text-transform:uppercase;text-decoration:none;padding:5px 8px;background:rgba(255,255,255,0.7);opacity:0;transition:opacity 0.6s}
-    .nav-btn.visible{opacity:1}
+    .nav-btn{position:fixed;bottom:16px;z-index:10;font-size:1.3em;font-weight:300;color:#333;letter-spacing:5px;text-transform:uppercase;text-decoration:none;padding:5px 8px;background:rgba(255,255,255,0.7);opacity:0}
     .nav-prev{left:20px}
     .nav-next{right:20px}
 
@@ -130,7 +127,8 @@
   // ── SCENE ──────────────────────────────────────────────────────
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 500);
-  camera.position.set(-2.5, 1.2, 2.5);
+  // Start far away for dolly entrance
+  camera.position.set(-6, 3, 6);
 
   const canvas = document.getElementById('c');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -151,7 +149,7 @@
   controls.minDistance = 1.2;
   controls.maxDistance = 6;
   controls.maxPolarAngle = Math.PI * 0.48;
-  controls.target.set(0, 0.2, 0);
+  controls.target.set(0, 0.15, 0);
   controls.rotateSpeed = 0.5;
 
   // ── LIGHTING ───────────────────────────────────────────────────
@@ -203,6 +201,8 @@
   let waspModel=null, waspPivot=null;
   const clock=new THREE.Clock();
   let animState='idle', labelsShown=true;
+  const wingMeshes = []; // Separated wing meshes for flutter
+  let introComplete = false;
 
   const lblPanels=[document.getElementById('lbl0'),document.getElementById('lbl1'),document.getElementById('lbl2')];
   const lblAnchors=[new THREE.Vector3(.25,.05,.1),new THREE.Vector3(0,.18,0),new THREE.Vector3(-.25,0,-.05)];
@@ -225,26 +225,56 @@
     waspModel.scale.setScalar(2.2/Math.max(size.x,size.y,size.z));
     waspModel.position.y=0.1;
 
-    waspModel.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
+    // Find wing meshes + enable shadows
+    waspModel.traverse(c=>{
+      if(c.isMesh){
+        c.castShadow=true; c.receiveShadow=true;
+        if(c.name.startsWith('Wing')){
+          wingMeshes.push(c);
+          // Store original rotation for flutter baseline
+          c.userData.baseRotZ = c.rotation.z;
+          console.log('Wing found:', c.name);
+        }
+      }
+    });
+    console.log(`Wings: ${wingMeshes.length}`);
 
     waspPivot.add(waspModel);
     scene.add(waspPivot);
 
-    // Dismiss loader
+    // Dismiss loader, then cinematic entrance
     document.getElementById('loader-fill').style.width='100%';
-    const lt=document.getElementById('loader-title'); lt.style.opacity='1';
+    document.getElementById('loader-title').style.opacity='1';
     setTimeout(()=>{
       document.getElementById('loader').classList.add('done');
       setTimeout(()=>{
         document.getElementById('loader').style.display='none';
-        document.getElementById('header').classList.add('visible');
-        document.getElementById('picker').classList.add('visible');
-        document.querySelectorAll('.nav-btn').forEach(n=>n.classList.add('visible'));
-        showLabels();
-        startCinematicText();
+        cinematicEntrance();
       },800);
     },600);
   },(p)=>{if(p.total>0)document.getElementById('loader-fill').style.width=Math.round(p.loaded/p.total*100)+'%';});
+
+  // ── CINEMATIC ENTRANCE — camera dolly + staggered UI reveal ──────
+  function cinematicEntrance() {
+    // Camera dollies from far to close over 2.5 seconds
+    gsap.to(camera.position, {
+      x: -2.5, y: 1.2, z: 2.5,
+      duration: 2.5,
+      ease: 'power2.inOut',
+      onComplete: () => { introComplete = true; }
+    });
+
+    // UI reveals with stagger
+    gsap.to('#header', { opacity: 1, duration: 0.6, delay: 1.5 });
+    gsap.to('#picker', { opacity: 1, duration: 0.6, delay: 2.0 });
+    gsap.to('.nav-btn', { opacity: 1, duration: 0.6, delay: 2.2, stagger: 0.1 });
+
+    // Labels reveal after camera settles
+    setTimeout(() => showLabels(), 2500);
+
+    // Cinematic text starts after entrance
+    setTimeout(() => startCinematicText(), 3000);
+  }
 
   // ── ANIMATION — proxy pattern (GSAP drives proxy, render loop reads) ──
   const animProxy = { px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0 };
@@ -283,6 +313,22 @@
     if (!waspPivot) return;
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
+
+    // Wing flutter
+    const t = clock.getElapsedTime();
+    wingMeshes.forEach((wing, i) => {
+      const base = wing.userData.baseRotZ || 0;
+      if (animState === 'idle') {
+        // Wings folded — occasional tiny twitch
+        wing.rotation.z = base + Math.sin(t * 0.5 + i * 2) * 0.01;
+      } else if (animState === 'hover') {
+        // Moderate flutter — 25 Hz
+        wing.rotation.z = base + Math.sin(t * 25 + i * Math.PI) * 0.2;
+      } else {
+        // Fast flutter — 40 Hz
+        wing.rotation.z = base + Math.sin(t * 40 + i * Math.PI) * 0.3;
+      }
+    });
   }
 
   // ── LABELS ─────────────────────────────────────────────────────
