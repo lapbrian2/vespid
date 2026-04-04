@@ -9,7 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    html,body{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;touch-action:none;background:#000;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;user-select:none;font-size:62.5%}
+    html{overflow:hidden;height:100%}
+    body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;user-select:none;font-size:62.5%}
 
     /* ── Loader ───────────────────────────── */
     #loader{position:absolute;inset:0;z-index:10;background:#000;display:flex;align-items:center;justify-content:center}
@@ -20,17 +21,18 @@
     #loader-title{font-size:1.4em;font-weight:300;color:#fff;text-transform:uppercase;letter-spacing:6px;margin-top:12px;transform:translateY(12px);opacity:0;transition:opacity 0.5s,transform 0.5s}
 
     /* ── Canvas ────────────────────────────── */
-    #webglCanvas{position:fixed;top:0;left:0;width:100%;height:100%}
+    #webglCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;touch-action:none}
 
     /* ── Menu (top-left) ──────────────────── */
-    #menu{position:absolute;inset:0;pointer-events:none;opacity:0;visibility:hidden;padding:20px;z-index:5}
+    #menu{position:fixed;top:0;left:0;right:0;pointer-events:none;opacity:0;visibility:hidden;padding:20px;z-index:5}
     #menu.visible{opacity:1;visibility:visible}
     #menu-header{display:flex;flex-direction:column;gap:4px}
     .menu-copy{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;padding:6px;background:rgba(0,0,0,0.75);width:fit-content}
     #menu-lab{font-size:2em;color:#fff;text-decoration:none;padding:2px 6px;background:rgba(0,0,0,0.75);display:inline-block;pointer-events:auto}
     #menu-lab span:nth-child(2){margin-left:-7px}
     #menu-lab span:nth-child(3){margin-left:-8px}
-    #menu-nav{position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:space-between;pointer-events:auto}
+    #menu-nav{position:fixed;bottom:20px;left:20px;right:20px;display:flex;justify-content:space-between;pointer-events:none;z-index:5}
+    .nav-btn{pointer-events:auto}
     .nav-btn{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;text-decoration:none;padding:6px;background:rgba(0,0,0,0.75)}
     .nav-btn:hover{color:#ccc}
 
@@ -130,7 +132,7 @@
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0x000000);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.4;
+  renderer.toneMappingExposure = 1.8;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -166,8 +168,8 @@
   controls.rotateSpeed = 0.5;
 
   // ── LIGHTING ───────────────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0x404040, 0.4));
-  const dirLight = new THREE.DirectionalLight(0xfff5e6, 2.0);
+  scene.add(new THREE.AmbientLight(0x606070, 0.8));
+  const dirLight = new THREE.DirectionalLight(0xfff5e6, 3.0);
   dirLight.position.set(4, 6, 4);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.set(1024, 1024);
@@ -178,11 +180,14 @@
   dirLight.shadow.radius = 3;
   scene.add(dirLight);
 
-  const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.6);
+  const fillLight = new THREE.DirectionalLight(0xe6f0ff, 1.0);
   fillLight.position.set(-3, 2, -2); scene.add(fillLight);
 
-  const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
   rimLight.position.set(0, 3, -4); scene.add(rimLight);
+
+  const bottomLight = new THREE.DirectionalLight(0xffffff, 0.3);
+  bottomLight.position.set(0, -2, 2); scene.add(bottomLight);
 
   // Environment
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -195,19 +200,18 @@
   pmrem.dispose();
 
   // ── GROUND PLANE ───────────────────────────────────────────────
+  // Ground plane — visible, receives shadows
   const groundGeo = new THREE.PlaneGeometry(40, 40);
-  const groundMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9, metalness: 0.0 });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI/2;
   ground.position.y = -0.5;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Grid helper
-  const grid = new THREE.GridHelper(20, 50, 0x333333, 0x1a1a1a);
+  // Grid
+  const grid = new THREE.GridHelper(20, 40, 0x444444, 0x222222);
   grid.position.y = -0.49;
-  grid.material.transparent = true;
-  grid.material.opacity = 0.5;
   scene.add(grid);
 
   // ── STATE ──────────────────────────────────────────────────────
