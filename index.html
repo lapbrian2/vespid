@@ -225,32 +225,14 @@
     waspModel.scale.setScalar(2.2/Math.max(size.x,size.y,size.z));
     waspModel.position.y=0.1;
 
-    // Find wing meshes, create pivot groups at wing centers
+    // Find wing meshes + store their base positions
     waspModel.traverse(c=>{
       if(c.isMesh){
         c.castShadow=true; c.receiveShadow=true;
         if(c.name.startsWith('Wing')){
-          // Get the wing's bounding box center for pivot point
-          c.geometry.computeBoundingBox();
-          const center = new THREE.Vector3();
-          c.geometry.boundingBox.getCenter(center);
-
-          // Create a pivot group at the wing's center
-          const pivot = new THREE.Group();
-          pivot.position.copy(center);
-          pivot.name = c.name + '_pivot';
-
-          // Offset the wing geometry so it rotates around the pivot
-          c.geometry.translate(-center.x, -center.y, -center.z);
-
-          // Re-parent: wing mesh goes inside pivot, pivot goes where wing was
-          const parent = c.parent;
-          parent.add(pivot);
-          pivot.add(c);
-          c.position.set(0, 0, 0);
-
-          wingMeshes.push({ mesh: c, pivot: pivot, name: c.name });
-          console.log('Wing:', c.name, 'pivot at', center.x.toFixed(3), center.y.toFixed(3), center.z.toFixed(3));
+          c.userData.baseY = c.position.y;
+          wingMeshes.push(c);
+          console.log('Wing:', c.name, 'baseY:', c.position.y.toFixed(4));
         }
       }
     });
@@ -331,21 +313,18 @@
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
 
-    // Wing flutter — rotate pivots around wing connection point
+    // Wing flutter — position-based (translate Y up/down)
     const t = clock.getElapsedTime();
-    wingMeshes.forEach((w, i) => {
-      const p = w.pivot || w;
-      const name = w.name || w.mesh?.name || '';
-      const isRight = name.includes('_R');
-      const sign = isRight ? -1 : 1;
-      const phase = name.includes('Hind') ? Math.PI * 0.3 : 0;
+    wingMeshes.forEach((wing, i) => {
+      const base = wing.userData.baseY || 0;
+      const phase = i * Math.PI * 0.25; // offset each wing
 
       if (animState === 'idle') {
-        p.rotation.x = Math.sin(t * 0.5 + i * 2) * 0.02 * sign;
+        wing.position.y = base + Math.sin(t * 0.5 + phase) * 0.002;
       } else if (animState === 'hover') {
-        p.rotation.x = Math.sin(t * 25 + phase) * 0.3 * sign;
+        wing.position.y = base + Math.sin(t * 30 + phase) * 0.015;
       } else {
-        p.rotation.x = Math.sin(t * 40 + phase) * 0.4 * sign;
+        wing.position.y = base + Math.sin(t * 45 + phase) * 0.025;
       }
     });
   }
