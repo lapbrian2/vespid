@@ -225,18 +225,32 @@
     waspModel.scale.setScalar(2.2/Math.max(size.x,size.y,size.z));
     waspModel.position.y=0.1;
 
-    // Find wing meshes + store their base positions
+    // Find wing meshes — log full geometry analysis
     waspModel.traverse(c=>{
       if(c.isMesh){
         c.castShadow=true; c.receiveShadow=true;
         if(c.name.startsWith('Wing')){
-          c.userData.baseY = c.position.y;
+          c.geometry.computeBoundingBox();
+          const bb = c.geometry.boundingBox;
+          const sz = new THREE.Vector3();
+          bb.getSize(sz);
+          // Find thinnest axis — that's the axis perpendicular to the wing surface
+          // The wing should rotate around the LONGEST axis (span direction)
+          const axes = [{name:'x',val:sz.x},{name:'y',val:sz.y},{name:'z',val:sz.z}];
+          axes.sort((a,b) => a.val - b.val);
+          const thinAxis = axes[0].name; // perpendicular to wing
+          const spanAxis = axes[2].name; // longest = wing span
+          const flapAxis = axes[1].name; // mid = chord direction
+
+          c.userData.flapAxis = thinAxis; // rotate around thin axis = flapping motion
+          c.userData.pos = c.position.clone();
           wingMeshes.push(c);
-          console.log('Wing:', c.name, 'baseY:', c.position.y.toFixed(4));
+          console.log(`Wing: ${c.name} | pos:(${c.position.x.toFixed(2)},${c.position.y.toFixed(2)},${c.position.z.toFixed(2)}) | size:(${sz.x.toFixed(3)},${sz.y.toFixed(3)},${sz.z.toFixed(3)}) | thin:${thinAxis} span:${spanAxis} flap-around:${thinAxis}`);
         }
       }
     });
     console.log(`Wings: ${wingMeshes.length}`);
+    window._wingMeshes = wingMeshes; // expose for debugging
 
     waspPivot.add(waspModel);
     scene.add(waspPivot);
@@ -313,18 +327,23 @@
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
 
-    // Wing flutter — all wings same direction, hindwings slightly delayed
+    // Wing flutter — per-wing axis based on geometry analysis
     const t = clock.getElapsedTime();
     wingMeshes.forEach((wing, i) => {
+      const axis = wing.userData.flapAxis || 'z';
       const phase = wing.name.includes('Hind') ? 0.2 : 0;
+      let amp;
 
       if (animState === 'idle') {
-        wing.rotation.z = Math.sin(t * 0.6 + i * 0.5) * 0.015;
+        amp = Math.sin(t * 0.6 + i * 0.5) * 0.015;
       } else if (animState === 'hover') {
-        wing.rotation.z = Math.sin(t * 25 + phase) * 0.35;
+        amp = Math.sin(t * 25 + phase) * 0.35;
       } else {
-        wing.rotation.z = Math.sin(t * 40 + phase) * 0.5;
+        amp = Math.sin(t * 40 + phase) * 0.5;
       }
+
+      // Apply to the correct axis for this wing
+      wing.rotation[axis] = amp;
     });
   }
 
