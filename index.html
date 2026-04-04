@@ -10,15 +10,15 @@
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
     html{overflow:hidden;height:100%}
-    body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;user-select:none;font-size:62.5%}
+    body{margin:0;width:100%;height:100%;overflow:hidden;background:#e8e8ec;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;user-select:none;font-size:62.5%}
 
     /* ── Loader ───────────────────────────── */
-    #loader{position:absolute;inset:0;z-index:10;background:#000;display:flex;align-items:center;justify-content:center}
+    #loader{position:absolute;inset:0;z-index:10;background:#e8e8ec;display:flex;align-items:center;justify-content:center}
     #loader-inner{text-align:center}
-    #loader-text{font-size:1.4em;font-weight:300;color:#fff;text-transform:uppercase;letter-spacing:6px}
-    #loader-bar{width:120px;height:2px;background:rgba(255,255,255,0.2);border-radius:4px;margin:14px auto 0;overflow:hidden}
-    #loader-fill{width:0%;height:100%;background:#fff;border-radius:4px;transition:width 0.3s}
-    #loader-title{font-size:1.4em;font-weight:300;color:#fff;text-transform:uppercase;letter-spacing:6px;margin-top:12px;transform:translateY(12px);opacity:0;transition:opacity 0.5s,transform 0.5s}
+    #loader-text{font-size:1.4em;font-weight:300;color:#333;text-transform:uppercase;letter-spacing:6px}
+    #loader-bar{width:120px;height:2px;background:rgba(0,0,0,0.15);border-radius:4px;margin:14px auto 0;overflow:hidden}
+    #loader-fill{width:0%;height:100%;background:#333;border-radius:4px;transition:width 0.3s}
+    #loader-title{font-size:1.4em;font-weight:300;color:#333;text-transform:uppercase;letter-spacing:6px;margin-top:12px;transform:translateY(12px);opacity:0;transition:opacity 0.5s,transform 0.5s}
 
     /* ── Canvas ────────────────────────────── */
     #webglCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;touch-action:none}
@@ -27,19 +27,19 @@
     #menu{position:fixed;top:0;left:0;right:0;pointer-events:none;opacity:0;visibility:hidden;padding:20px;z-index:5}
     #menu.visible{opacity:1;visibility:visible}
     #menu-header{display:flex;flex-direction:column;gap:4px}
-    .menu-copy{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;padding:6px;background:rgba(0,0,0,0.75);width:fit-content}
-    #menu-lab{font-size:2em;color:#fff;text-decoration:none;padding:2px 6px;background:rgba(0,0,0,0.75);display:inline-block;pointer-events:auto}
+    .menu-copy{font-size:1.4em;font-weight:300;color:#000;letter-spacing:6px;text-transform:uppercase;padding:6px;background:rgba(255,255,255,0.75);width:fit-content}
+    #menu-lab{font-size:2em;color:#000;text-decoration:none;padding:2px 6px;background:rgba(255,255,255,0.75);display:inline-block;pointer-events:auto}
     #menu-lab span:nth-child(2){margin-left:-7px}
     #menu-lab span:nth-child(3){margin-left:-8px}
     #menu-nav{position:fixed;bottom:20px;left:20px;right:20px;display:flex;justify-content:space-between;pointer-events:none;z-index:5}
     .nav-btn{pointer-events:auto}
-    .nav-btn{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;text-decoration:none;padding:6px;background:rgba(0,0,0,0.75)}
-    .nav-btn:hover{color:#ccc}
+    .nav-btn{font-size:1.4em;font-weight:300;color:#000;letter-spacing:6px;text-transform:uppercase;text-decoration:none;padding:6px;background:rgba(255,255,255,0.75)}
+    .nav-btn:hover{color:#555}
 
     /* ── Animation picker (bottom-center) ── */
     #picker{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:5;opacity:0;visibility:hidden}
     #picker.visible{opacity:1;visibility:visible}
-    .pick-btn{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;background:rgba(0,0,0,0.75);border:none;cursor:pointer;padding:6px;opacity:0.5;transition:opacity 0.3s}
+    .pick-btn{font-size:1.4em;font-weight:300;color:#000;letter-spacing:6px;text-transform:uppercase;background:rgba(255,255,255,0.75);border:none;cursor:pointer;padding:6px;opacity:0.5;transition:opacity 0.3s}
     .pick-btn.active{opacity:1}
     .pick-btn:hover{opacity:0.8}
 
@@ -52,7 +52,7 @@
     .label-dot{width:4px;height:4px;border-radius:50%;background:#000;flex-shrink:0}
 
     /* ── Custom cursor ─────────────────────── */
-    #cursor{position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;pointer-events:none;z-index:20;mix-blend-mode:difference;opacity:0;transform:translate(-50%,-50%);transition:opacity 0.3s}
+    #cursor{position:absolute;width:20px;height:20px;border-radius:50%;background:#000;pointer-events:none;z-index:20;mix-blend-mode:difference;opacity:0;transform:translate(-50%,-50%);transition:opacity 0.3s}
     #cursor.active{opacity:1}
   </style>
 </head>
@@ -130,9 +130,9 @@
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(innerWidth, innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.setClearColor(0x000000);
-  renderer.toneMapping = THREE.NoToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.setClearColor(0xe8e8ec);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 3.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -147,10 +147,10 @@
 
   // Vignette (custom shader)
   const vignetteShader = {
-    uniforms: { tDiffuse: { value: null }, offset: { value: 0.9 }, darkness: { value: 0.05 } },
+    uniforms: { tDiffuse: { value: null } },
     vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-    fragmentShader: `uniform sampler2D tDiffuse; uniform float offset; uniform float darkness; varying vec2 vUv;
-      void main(){ vec4 c=texture2D(tDiffuse,vUv); vec2 uv=(vUv-0.5)*2.0; float d=1.0-smoothstep(offset,offset+0.5,length(uv)); c.rgb*=mix(1.0-darkness,1.0,d); gl_FragColor=c; }`
+    fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+      void main(){ vec4 c=texture2D(tDiffuse,vUv); gl_FragColor=c; }`
   };
   composer.addPass(new ShaderPass(vignetteShader));
 
@@ -168,34 +168,37 @@
   controls.rotateSpeed = 0.5;
 
   // ── LIGHTING ───────────────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0xccccdd, 3.0));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 6.0);
-  dirLight.position.set(4, 6, 4);
+  // Studio lighting — bright on the subject, dark everywhere else
+  scene.add(new THREE.AmbientLight(0x888899, 1.2));
+
+  // Key — warm, strong, shadow-casting
+  const dirLight = new THREE.DirectionalLight(0xfff5e6, 5.0);
+  dirLight.position.set(3, 5, 4);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.set(1024, 1024);
-  dirLight.shadow.camera.left = -3; dirLight.shadow.camera.right = 3;
-  dirLight.shadow.camera.top = 3; dirLight.shadow.camera.bottom = -3;
-  dirLight.shadow.camera.near = 0.1; dirLight.shadow.camera.far = 20;
-  dirLight.shadow.bias = -0.001;
-  dirLight.shadow.radius = 3;
+  dirLight.shadow.camera.left = -2; dirLight.shadow.camera.right = 2;
+  dirLight.shadow.camera.top = 2; dirLight.shadow.camera.bottom = -2;
+  dirLight.shadow.camera.near = 0.1; dirLight.shadow.camera.far = 15;
+  dirLight.shadow.bias = -0.0005;
+  dirLight.shadow.radius = 4;
   scene.add(dirLight);
 
-  const fillLight = new THREE.DirectionalLight(0xe6f0ff, 4.0);
-  fillLight.position.set(-3, 2, -2); scene.add(fillLight);
+  // Fill — cool, softer
+  const fillLight = new THREE.DirectionalLight(0xdde8ff, 2.0);
+  fillLight.position.set(-3, 2, -1); scene.add(fillLight);
 
-  const rimLight = new THREE.DirectionalLight(0xffffff, 3.0);
-  rimLight.position.set(0, 3, -4); scene.add(rimLight);
+  // Rim — edge definition from behind
+  const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
+  rimLight.position.set(0, 2, -4); scene.add(rimLight);
 
-  const bottomLight = new THREE.DirectionalLight(0xffffff, 2.0);
-  bottomLight.position.set(0, -2, 2); scene.add(bottomLight);
-
-  const frontLight = new THREE.DirectionalLight(0xffffff, 3.0);
-  frontLight.position.set(0, 1, 5); scene.add(frontLight);
+  // Front fill — makes sure the face is lit
+  const frontLight = new THREE.DirectionalLight(0xfff8ee, 2.0);
+  frontLight.position.set(0, 0.5, 4); scene.add(frontLight);
 
   // Environment
   const pmrem = new THREE.PMREMGenerator(renderer);
   const es = new THREE.Scene();
-  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x666670,side:THREE.BackSide})));
+  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0xccccdd,side:THREE.BackSide})));
   const sg = new THREE.SphereGeometry(0.3,8,8);
   const sp1 = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xffffff})); sp1.position.set(4,4,4); es.add(sp1);
   const sp2 = new THREE.Mesh(sg.clone(), new THREE.MeshBasicMaterial({color:0x4466aa})); sp2.position.set(-3,1,-3); es.add(sp2);
@@ -203,19 +206,54 @@
   pmrem.dispose();
 
   // ── GROUND PLANE ───────────────────────────────────────────────
-  // Ground plane — visible, receives shadows
+  // Ground — shadow-only, invisible surface
   const groundGeo = new THREE.PlaneGeometry(40, 40);
-  const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2a34, roughness: 0.8, metalness: 0.0 });
+  const groundMat = new THREE.ShadowMaterial({ opacity: 0.5 });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI/2;
   ground.position.y = -0.5;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Grid
-  const grid = new THREE.GridHelper(20, 40, 0x555555, 0x333333);
-  grid.position.y = -0.49;
-  scene.add(grid);
+  // Grid — custom shader that fades with distance from center
+  const gridShader = {
+    uniforms: {
+      uColor: { value: new THREE.Color(0x999999) },
+      uFadeStart: { value: 2.0 },
+      uFadeEnd: { value: 8.0 },
+      uGridScale: { value: 0.5 },
+    },
+    vertexShader: `
+      varying vec2 vWorldPos;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uFadeStart;
+      uniform float uFadeEnd;
+      uniform float uGridScale;
+      varying vec2 vWorldPos;
+      void main() {
+        vec2 grid = abs(fract(vWorldPos / uGridScale - 0.5) - 0.5) / fwidth(vWorldPos / uGridScale);
+        float line = min(grid.x, grid.y);
+        float gridAlpha = 1.0 - min(line, 1.0);
+        float dist = length(vWorldPos);
+        float fade = 1.0 - smoothstep(uFadeStart, uFadeEnd, dist);
+        gl_FragColor = vec4(uColor, gridAlpha * fade * 0.4);
+      }
+    `
+  };
+  const gridMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 20, 1, 1),
+    new THREE.ShaderMaterial({ ...gridShader, transparent: true, side: THREE.DoubleSide, depthWrite: false })
+  );
+  gridMesh.rotation.x = -Math.PI/2;
+  gridMesh.position.y = -0.49;
+  scene.add(gridMesh);
 
   // ── STATE ──────────────────────────────────────────────────────
   let waspModel = null;
@@ -240,7 +278,7 @@
   const labelPanels = document.querySelectorAll('.label-panel');
 
   // ── 3D LABEL LINES ─────────────────────────────────────────────
-  const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.5 });
   const labelLines = [];
   for (let i = 0; i < 3; i++) {
     const geo = new THREE.BufferGeometry().setFromPoints([
