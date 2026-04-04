@@ -263,6 +263,8 @@
   let labelsShown = true;
   const clock = new THREE.Clock();
   const mouse = { x: 0, y: 0, active: false, timer: null };
+  let animState = 'idle';
+  const wingMeshes = []; // Will try to find wing sub-meshes
 
   // ── LABEL ANCHORS (world-space positions) ──────────────────────
   const labelAnchors = [
@@ -307,10 +309,23 @@
       waspModel.scale.setScalar(s);
       waspModel.position.y += 0.15;
 
-      // Shadows
+      // Shadows + find wing meshes
       waspModel.traverse(child => {
-        if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          console.log('Mesh:', child.name, 'verts:', child.geometry.attributes.position.count);
+          // Try to identify wings by name or vertex count
+          const name = child.name.toLowerCase();
+          if (name.includes('wing') || name.includes('ala')) {
+            wingMeshes.push(child);
+            console.log('  → Wing found:', child.name);
+          }
+        }
       });
+      // Expose for debugging
+      window._wasp = waspModel;
+      window._scene = scene;
 
       // Animations (if any baked in the model)
       if (gltf.animations.length > 0) {
@@ -348,26 +363,66 @@
 
   // ── ANIMATION SWITCHING ────────────────────────────────────────
   function switchAnimation(index) {
-    if (!mixer || !actions[index]) {
-      // No baked animations — just toggle label visibility
-      const isIdle = index === 0;
-      if (isIdle && !labelsShown) showLabels();
-      if (!isIdle && labelsShown) hideLabels();
-      return;
-    }
-
-    const newAction = actions[index];
-    if (newAction === currentAction) return;
-
-    if (currentAction) {
-      currentAction.fadeOut(0.5);
-    }
-    newAction.reset().fadeIn(0.5).play();
-    currentAction = newAction;
+    animState = ['idle', 'hover', 'fly'][index] || 'idle';
 
     // Labels only in Idle
     if (index === 0 && !labelsShown) showLabels();
     if (index !== 0 && labelsShown) hideLabels();
+
+    // If baked animations exist, crossfade
+    if (mixer && actions[index]) {
+      const newAction = actions[index];
+      if (newAction === currentAction) return;
+      if (currentAction) currentAction.fadeOut(0.5);
+      newAction.reset().fadeIn(0.5).play();
+      currentAction = newAction;
+    }
+  }
+
+  // ── PROCEDURAL ANIMATION ──────────────────────────────────────
+  // Simulates idle/hover/fly with body movement + wing flutter
+  function updateAnimation(t) {
+    if (!waspModel) return;
+
+    if (animState === 'idle') {
+      // Resting — very subtle breathing, no wing movement
+      waspModel.position.y = 0.15 + Math.sin(t * 0.8) * 0.002;
+      waspModel.rotation.x = 0;
+      waspModel.rotation.z = 0;
+
+    } else if (animState === 'hover') {
+      // Airborne — lifted off ground, gentle drift, wings blur
+      const hover = Math.sin(t * 1.5) * 0.015;
+      const drift = Math.sin(t * 0.4) * 0.03;
+      waspModel.position.y = 0.4 + hover;
+      waspModel.position.x = drift;
+      waspModel.rotation.x = -0.05; // Slight forward lean
+      waspModel.rotation.z = -drift * 0.3; // Bank
+
+    } else if (animState === 'fly') {
+      // Active flight — circular path, banking, altitude changes
+      const speed = 0.6;
+      const radius = 0.12;
+      waspModel.position.x = Math.sin(t * speed) * radius;
+      waspModel.position.z = Math.cos(t * speed) * radius * 0.5;
+      waspModel.position.y = 0.5 + Math.sin(t * speed * 1.5) * 0.04;
+      waspModel.rotation.x = -0.12; // Nose down
+      waspModel.rotation.z = -Math.cos(t * speed) * 0.15; // Banking
+      waspModel.rotation.y = -Math.cos(t * speed) * 0.08; // Yaw
+    }
+
+    // Wing flutter — animate wing meshes if found
+    wingMeshes.forEach((wing, i) => {
+      if (animState === 'idle') {
+        // Wings folded, occasional twitch
+        wing.rotation.z = Math.sin(t * 0.5 + i) * 0.01;
+      } else {
+        // Fast flutter — different frequency per wing for realism
+        const freq = animState === 'fly' ? 40 : 25;
+        const amp = animState === 'fly' ? 0.3 : 0.2;
+        wing.rotation.z = Math.sin(t * freq + i * Math.PI) * amp;
+      }
+    });
   }
 
   function showLabels() {
@@ -437,7 +492,9 @@
   function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
+    const t = clock.getElapsedTime();
     if (mixer) mixer.update(delta);
+    updateAnimation(t);
     controls.update();
     updateLabels();
     composer.render();
