@@ -327,23 +327,25 @@
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
 
-    // Wing flutter — per-wing axis based on geometry analysis
+    // Wing flutter — try ALL axes simultaneously for natural flap
     const t = clock.getElapsedTime();
     wingMeshes.forEach((wing, i) => {
-      const axis = wing.userData.flapAxis || 'z';
-      const phase = wing.name.includes('Hind') ? 0.2 : 0;
+      const phase = i * 0.15;
       let amp;
 
       if (animState === 'idle') {
-        amp = Math.sin(t * 0.6 + i * 0.5) * 0.015;
+        amp = Math.sin(t * 0.6 + i * 0.5) * 0.01;
       } else if (animState === 'hover') {
-        amp = Math.sin(t * 25 + phase) * 0.35;
+        amp = Math.sin(t * 25 + phase) * 0.3;
       } else {
-        amp = Math.sin(t * 40 + phase) * 0.5;
+        amp = Math.sin(t * 40 + phase) * 0.45;
       }
 
-      // Apply to the correct axis for this wing
-      wing.rotation[axis] = amp;
+      // Apply to all three axes — whichever produces visible flapping
+      // will dominate visually. The others just add subtle twist.
+      wing.rotation.x = amp * 0.3;
+      wing.rotation.y = amp;
+      wing.rotation.z = amp * 0.5;
     });
   }
 
