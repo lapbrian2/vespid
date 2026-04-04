@@ -24,8 +24,8 @@
     /* ── Header ────────────────────────── */
     #header{position:fixed;top:16px;left:20px;z-index:10;opacity:0;transition:opacity 0.6s}
     #header.visible{opacity:1}
-    .h-lab{font-size:1.8em;font-weight:600;color:#222;letter-spacing:1px;text-decoration:none;display:inline-block}
-    .h-copy{font-size:1.3em;font-weight:300;color:#555;letter-spacing:5px;text-transform:uppercase;margin-top:2px}
+    .h-lab{font-size:1.6em;font-weight:500;color:#333;letter-spacing:1px;text-decoration:none;display:inline-block}
+    .h-copy{font-size:1.1em;font-weight:300;color:#888;letter-spacing:4px;text-transform:uppercase;margin-top:2px}
 
     /* ── Picker ─────────────────────────── */
     #picker{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:10;opacity:0;transition:opacity 0.6s}
@@ -48,11 +48,11 @@
     .label-dot{width:3px;height:3px;border-radius:50%;background:#333;flex-shrink:0}
 
     /* ── Story text — cinematic split-text ── */
-    #story{position:fixed;top:0;left:0;right:0;z-index:6;pointer-events:none;padding:70px 40px 0}
-    .story-slide{position:absolute;top:70px;left:40px;right:40px}
-    .story-overline{font-size:1.1em;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:#B8964E;margin-bottom:6px}
-    .story-title{font-size:clamp(2.4em,4vw,3.6em);font-weight:300;color:#111;letter-spacing:-0.5px;line-height:1.15;margin-bottom:10px}
-    .story-body{font-size:1.4em;font-weight:300;color:#555;line-height:1.7;max-width:420px}
+    #story{position:fixed;top:0;left:0;right:0;z-index:6;pointer-events:none}
+    .story-slide{position:absolute;top:80px;left:40px;max-width:480px}
+    .story-overline{font-size:1em;font-weight:500;letter-spacing:4px;text-transform:uppercase;color:#B8964E;margin-bottom:8px}
+    .story-title{font-size:clamp(2.2em,3.5vw,3.2em);font-weight:300;color:#1a1a1a;letter-spacing:-0.3px;line-height:1.2;margin-bottom:12px}
+    .story-body{font-size:1.3em;font-weight:300;color:#666;line-height:1.7;max-width:380px}
     .split-char{display:inline-block;opacity:0}
 
     /* ── Cursor ───────────────────────── */
@@ -138,7 +138,7 @@
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0xe8e8ec);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.8;
+  renderer.toneMappingExposure = 1.0;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -155,24 +155,31 @@
   controls.rotateSpeed = 0.5;
 
   // ── LIGHTING ───────────────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0x999aaa, 1.5));
-  const key = new THREE.DirectionalLight(0xfff5e6, 5.0);
+  // Studio lighting — balanced for PBR model on light background
+  scene.add(new THREE.AmbientLight(0x9999aa, 0.4));
+
+  const key = new THREE.DirectionalLight(0xfff5e6, 1.5);
   key.position.set(3, 5, 4);
   key.castShadow = true;
-  key.shadow.mapSize.set(1024,1024);
-  key.shadow.camera.left=-2; key.shadow.camera.right=2;
-  key.shadow.camera.top=2; key.shadow.camera.bottom=-2;
-  key.shadow.bias=-0.0005; key.shadow.radius=4;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.left = -2; key.shadow.camera.right = 2;
+  key.shadow.camera.top = 2; key.shadow.camera.bottom = -2;
+  key.shadow.bias = -0.0005; key.shadow.radius = 4;
   scene.add(key);
-  scene.add(new THREE.DirectionalLight(0xdde8ff, 2.5).position.set(-3,2,-1) && new THREE.DirectionalLight(0xdde8ff,2.5));
-  const fill = new THREE.DirectionalLight(0xdde8ff,2.5); fill.position.set(-3,2,-1); scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffffff,1.5); rim.position.set(0,2,-4); scene.add(rim);
-  const front = new THREE.DirectionalLight(0xfff8ee,2.5); front.position.set(0,0.5,4); scene.add(front);
+
+  const fill = new THREE.DirectionalLight(0xdde8ff, 0.6);
+  fill.position.set(-3, 2, -1); scene.add(fill);
+
+  const rim = new THREE.DirectionalLight(0xffffff, 0.8);
+  rim.position.set(0, 2, -4); scene.add(rim);
+
+  const front = new THREE.DirectionalLight(0xfff8ee, 0.5);
+  front.position.set(0, 0.5, 4); scene.add(front);
 
   // Env map
   const pmrem = new THREE.PMREMGenerator(renderer);
   const es = new THREE.Scene();
-  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0xbbbbcc,side:THREE.BackSide})));
+  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x444450,side:THREE.BackSide})));
   const sg = new THREE.SphereGeometry(0.3,8,8);
   const s1=new THREE.Mesh(sg,new THREE.MeshBasicMaterial({color:0xffffff})); s1.position.set(4,4,4); es.add(s1);
   const s2=new THREE.Mesh(sg.clone(),new THREE.MeshBasicMaterial({color:0x88aacc})); s2.position.set(-3,1,-3); es.add(s2);
