@@ -131,8 +131,8 @@
   renderer.setSize(innerWidth, innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0x000000);
-  renderer.toneMapping = THREE.LinearToneMapping;
-  renderer.toneMappingExposure = 2.5;
+  renderer.toneMapping = THREE.NoToneMapping;
+  renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -147,7 +147,7 @@
 
   // Vignette (custom shader)
   const vignetteShader = {
-    uniforms: { tDiffuse: { value: null }, offset: { value: 0.8 }, darkness: { value: 0.15 } },
+    uniforms: { tDiffuse: { value: null }, offset: { value: 0.9 }, darkness: { value: 0.05 } },
     vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
     fragmentShader: `uniform sampler2D tDiffuse; uniform float offset; uniform float darkness; varying vec2 vUv;
       void main(){ vec4 c=texture2D(tDiffuse,vUv); vec2 uv=(vUv-0.5)*2.0; float d=1.0-smoothstep(offset,offset+0.5,length(uv)); c.rgb*=mix(1.0-darkness,1.0,d); gl_FragColor=c; }`
@@ -168,8 +168,8 @@
   controls.rotateSpeed = 0.5;
 
   // ── LIGHTING ───────────────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0x888899, 1.5));
-  const dirLight = new THREE.DirectionalLight(0xfff5e6, 4.0);
+  scene.add(new THREE.AmbientLight(0xccccdd, 3.0));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 6.0);
   dirLight.position.set(4, 6, 4);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.set(1024, 1024);
@@ -180,22 +180,22 @@
   dirLight.shadow.radius = 3;
   scene.add(dirLight);
 
-  const fillLight = new THREE.DirectionalLight(0xe6f0ff, 2.0);
+  const fillLight = new THREE.DirectionalLight(0xe6f0ff, 4.0);
   fillLight.position.set(-3, 2, -2); scene.add(fillLight);
 
-  const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
+  const rimLight = new THREE.DirectionalLight(0xffffff, 3.0);
   rimLight.position.set(0, 3, -4); scene.add(rimLight);
 
-  const bottomLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  const bottomLight = new THREE.DirectionalLight(0xffffff, 2.0);
   bottomLight.position.set(0, -2, 2); scene.add(bottomLight);
 
-  const frontLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  const frontLight = new THREE.DirectionalLight(0xffffff, 3.0);
   frontLight.position.set(0, 1, 5); scene.add(frontLight);
 
   // Environment
   const pmrem = new THREE.PMREMGenerator(renderer);
   const es = new THREE.Scene();
-  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x333340,side:THREE.BackSide})));
+  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x666670,side:THREE.BackSide})));
   const sg = new THREE.SphereGeometry(0.3,8,8);
   const sp1 = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xffffff})); sp1.position.set(4,4,4); es.add(sp1);
   const sp2 = new THREE.Mesh(sg.clone(), new THREE.MeshBasicMaterial({color:0x4466aa})); sp2.position.set(-3,1,-3); es.add(sp2);
@@ -205,7 +205,7 @@
   // ── GROUND PLANE ───────────────────────────────────────────────
   // Ground plane — visible, receives shadows
   const groundGeo = new THREE.PlaneGeometry(40, 40);
-  const groundMat = new THREE.MeshStandardMaterial({ color: 0x1a1a24, roughness: 0.85, metalness: 0.0 });
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2a34, roughness: 0.8, metalness: 0.0 });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI/2;
   ground.position.y = -0.5;
@@ -213,7 +213,7 @@
   scene.add(ground);
 
   // Grid
-  const grid = new THREE.GridHelper(20, 40, 0x444444, 0x222222);
+  const grid = new THREE.GridHelper(20, 40, 0x555555, 0x333333);
   grid.position.y = -0.49;
   scene.add(grid);
 
