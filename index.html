@@ -6,417 +6,407 @@
   <title>VESPID</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Geist+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
   <style>
-    @font-face { font-family:'Geist'; src:url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2'); font-weight:400; }
-    @font-face { font-family:'Geist'; src:url('https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2'); font-weight:500; }
-
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    html{scroll-behavior:auto}
-    body{background:#09090B;color:#F5F5F0;font-family:'Geist',sans-serif;overscroll-behavior:none}
+    html,body{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;touch-action:none;background:#000;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;user-select:none;font-size:62.5%}
 
-    /* ── Loading ──────────────────────────── */
-    #loader{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;background:#09090B;transition:opacity 1s ease}
-    #loader.done{opacity:0;pointer-events:none}
-    .loader-text{font-weight:500;font-size:14px;letter-spacing:0.3em;text-transform:uppercase}
-    .loader-bar{width:120px;height:1px;background:#333;margin:16px 0;position:relative;overflow:hidden}
-    .loader-bar::after{content:'';position:absolute;inset:0;background:#F5F5F0;animation:slide 1.5s ease infinite}
-    @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-    .loader-sub{font-family:'Geist Mono',monospace;font-size:12px;color:#71717A}
+    /* ── Loader ───────────────────────────── */
+    #loader{position:absolute;inset:0;z-index:10;background:#000;display:flex;align-items:center;justify-content:center}
+    #loader-inner{text-align:center}
+    #loader-text{font-size:1.4em;font-weight:300;color:#fff;text-transform:uppercase;letter-spacing:6px}
+    #loader-bar{width:120px;height:2px;background:rgba(255,255,255,0.2);border-radius:4px;margin:14px auto 0;overflow:hidden}
+    #loader-fill{width:0%;height:100%;background:#fff;border-radius:4px;transition:width 0.3s}
+    #loader-title{font-size:1.4em;font-weight:300;color:#fff;text-transform:uppercase;letter-spacing:6px;margin-top:12px;transform:translateY(12px);opacity:0;transition:opacity 0.5s,transform 0.5s}
 
-    /* ── 3D Canvas (fixed background) ────── */
-    #canvas-wrap{position:fixed;inset:0;z-index:0}
-    canvas{display:block}
+    /* ── Canvas ────────────────────────────── */
+    #webglCanvas{position:fixed;top:0;left:0;width:100%;height:100%}
 
-    /* ── Film grain overlay ───────────────── */
-    .grain::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");background-repeat:repeat;background-size:200px;opacity:0.025;pointer-events:none;z-index:9998;mix-blend-mode:overlay}
+    /* ── Menu (top-left) ──────────────────── */
+    #menu{position:absolute;inset:0;pointer-events:none;opacity:0;visibility:hidden;padding:20px;z-index:5}
+    #menu.visible{opacity:1;visibility:visible}
+    #menu-header{display:flex;flex-direction:column;gap:4px}
+    .menu-copy{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;padding:6px;background:rgba(0,0,0,0.75);width:fit-content}
+    #menu-lab{font-size:2em;color:#fff;text-decoration:none;padding:2px 6px;background:rgba(0,0,0,0.75);display:inline-block;pointer-events:auto}
+    #menu-lab span:nth-child(2){margin-left:-7px}
+    #menu-lab span:nth-child(3){margin-left:-8px}
+    #menu-nav{position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:space-between;pointer-events:auto}
+    .nav-btn{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;text-decoration:none;padding:6px;background:rgba(0,0,0,0.75)}
+    .nav-btn:hover{color:#ccc}
 
-    /* ── Vignette ──────────────────────────── */
-    .vignette::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(9,9,11,0.5) 100%);pointer-events:none;z-index:9997}
+    /* ── Animation picker (bottom-center) ── */
+    #picker{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:5;opacity:0;visibility:hidden}
+    #picker.visible{opacity:1;visibility:visible}
+    .pick-btn{font-size:1.4em;font-weight:300;color:#fff;letter-spacing:6px;text-transform:uppercase;background:rgba(0,0,0,0.75);border:none;cursor:pointer;padding:6px;opacity:0.5;transition:opacity 0.3s}
+    .pick-btn.active{opacity:1}
+    .pick-btn:hover{opacity:0.8}
 
-    /* ── Scroll content overlay ────────────── */
-    #content{position:relative;z-index:10;pointer-events:none}
-    #content>section{pointer-events:auto}
+    /* ── Labels ────────────────────────────── */
+    #labels{position:fixed;inset:0;pointer-events:none;z-index:4}
+    .label-panel{position:absolute;top:0;left:0;padding:0 6px 0 10px;mix-blend-mode:difference;isolation:isolate;opacity:0;visibility:hidden;white-space:nowrap;width:fit-content;transition:opacity 0.4s,visibility 0.4s}
+    .label-panel.visible{opacity:1;visibility:visible}
+    .label-name{font-size:1.4em;font-weight:500;letter-spacing:6px;text-transform:uppercase;background:#fff;color:#000;padding:2px 6px;width:fit-content}
+    .label-sub{font-size:1.2em;font-weight:300;color:#000;background:#fff;padding:2px 6px;margin-top:4px;display:flex;align-items:center;gap:6px}
+    .label-dot{width:4px;height:4px;border-radius:50%;background:#000;flex-shrink:0}
 
-    /* ── Header (fixed) ───────────────────── */
-    #header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:flex-start;padding:28px 40px;pointer-events:none}
-    .header-left{opacity:0;transition:opacity 0.8s ease 0.3s}
-    .header-left.visible{opacity:1}
-    .header-left.scrolled{opacity:0.3;transform:scale(0.85);transform-origin:top left;transition:opacity 0.5s,transform 0.5s}
-    .header-label{font-family:'Geist Mono',monospace;font-size:11px;color:#52525B;letter-spacing:0.12em}
-    .header-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:24px;color:#F5F5F0;margin-top:2px;letter-spacing:-0.02em}
-    .header-species{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:13px;color:#52525B;margin-top:1px}
-
-    /* ── State buttons (fixed bottom) ─────── */
-    #controls{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;gap:24px;z-index:100;opacity:0;transition:opacity 0.8s ease 0.5s;pointer-events:auto}
-    #controls.visible{opacity:1}
-    .state-btn{font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#52525B;background:none;border:none;cursor:pointer;padding:6px 0;border-bottom:1px solid transparent;transition:color 0.3s,border-color 0.3s}
-    .state-btn:hover{color:#A1A1AA}
-    .state-btn.active{color:#F5F5F0;border-bottom-color:#B8964E}
-
-    /* ── Nav links (fixed bottom corners) ─── */
-    .nav-link{position:fixed;bottom:28px;z-index:100;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#52525B;text-decoration:none;transition:color 0.3s;pointer-events:auto;opacity:0;transition:opacity 0.8s ease 0.7s,color 0.3s}
-    .nav-link.visible{opacity:1}
-    .nav-link:hover{color:#A1A1AA}
-    .nav-prev{left:40px}
-    .nav-next{right:40px}
-
-    /* ── Scroll sections ──────────────────── */
-    .section{min-height:100vh;display:flex;align-items:center;padding:0 clamp(32px,6vw,120px)}
-    .section-hero{min-height:100vh;justify-content:flex-start}
-
-    .section-content{max-width:380px;opacity:0;transform:translateY(30px);background:rgba(9,9,11,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:32px 36px;border-left:2px solid rgba(184,150,78,0.2);border-radius:2px}
-    .section-content.right{margin-left:auto}
-
-    .section-overline{font-weight:500;font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:#B8964E;margin-bottom:10px}
-    .section-title{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(28px,4vw,48px);line-height:1.15;letter-spacing:-0.02em;color:#F5F5F0;margin-bottom:14px}
-    .section-body{font-weight:400;font-size:14px;line-height:1.7;color:#A1A1AA;max-width:360px}
-    .section-number{font-family:'Geist Mono',monospace;font-size:11px;color:#3F3F46;letter-spacing:0.1em;position:absolute;top:32px;left:clamp(32px,6vw,120px);opacity:0}
-
-    /* ── Scroll progress ──────────────────── */
-    #progress{position:fixed;top:0;left:0;width:0;height:1px;background:#B8964E;z-index:200}
-
-    /* ── Anatomy labels (3D-anchored) ─────── */
-    .anatomy-label{position:fixed;pointer-events:none;z-index:15;opacity:0;transition:opacity 0.4s ease;white-space:nowrap}
-    .anatomy-label.active{opacity:0.7}
-    .anatomy-label .a-title{font-weight:500;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:#A1A1AA}
-    .anatomy-label .a-sub{font-size:8px;color:#52525B;padding-left:6px;border-left:1px solid #333;margin-top:2px}
+    /* ── Custom cursor ─────────────────────── */
+    #cursor{position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;pointer-events:none;z-index:20;mix-blend-mode:difference;opacity:0;transform:translate(-50%,-50%);transition:opacity 0.3s}
+    #cursor.active{opacity:1}
   </style>
 </head>
-<body class="grain vignette">
-
+<body>
   <!-- Loader -->
   <div id="loader">
-    <div class="loader-text">LOADING</div>
-    <div class="loader-bar"></div>
-    <div class="loader-sub">[01] VESPID</div>
-  </div>
-
-  <!-- Progress -->
-  <div id="progress"></div>
-
-  <!-- Header -->
-  <div id="header">
-    <div class="header-left">
-      <div class="header-label">[01] VESPID</div>
-      <div class="header-title">Vespid</div>
-      <div class="header-species">Vespa orientalis</div>
+    <div id="loader-inner">
+      <div id="loader-text">loading</div>
+      <div id="loader-bar"><div id="loader-fill"></div></div>
+      <div id="loader-title">[01] Vespid</div>
     </div>
   </div>
 
-  <!-- State buttons -->
-  <div id="controls">
-    <button class="state-btn active" data-state="idle">Idle</button>
-    <button class="state-btn" data-state="hover">Hover</button>
-    <button class="state-btn" data-state="fly">Fly</button>
+  <!-- Canvas -->
+  <canvas id="webglCanvas"></canvas>
+
+  <!-- Menu -->
+  <div id="menu">
+    <div id="menu-header">
+      <a id="menu-lab" href="#"><span>L</span><span>A</span><span>B</span></a>
+      <div class="menu-copy">[01] Vespid</div>
+    </div>
+    <div id="menu-nav">
+      <a class="nav-btn" href="#">&lt;Prev</a>
+      <a class="nav-btn" href="#">Next&gt;</a>
+    </div>
   </div>
 
-  <!-- Nav -->
-  <a href="#" class="nav-link nav-prev">&lt;Prev</a>
-  <a href="#" class="nav-link nav-next">Next&gt;</a>
-
-  <!-- 3D Canvas -->
-  <div id="canvas-wrap"></div>
-
-  <!-- Anatomy labels -->
-  <div class="anatomy-label" id="label-mandibles"><div class="a-title">Mandibula</div><div class="a-sub">Mastication &amp; manipulation</div><div class="a-sub">Prey processing</div></div>
-  <div class="anatomy-label" id="label-thorax"><div class="a-title">Thorax</div><div class="a-sub">Indirect flight muscles</div><div class="a-sub">Wing articulation</div></div>
-  <div class="anatomy-label" id="label-abdomen"><div class="a-title">Abdomen</div><div class="a-sub">Venom sac + stinger</div><div class="a-sub">Tracheal system</div></div>
-
-  <!-- Scroll content -->
-  <div id="content">
-    <section class="section section-hero"><div style="height:100vh"></div></section>
-
-    <section class="section" id="sec-thorax">
-      <span class="section-number">[02]</span>
-      <div class="section-content">
-        <div class="section-overline">Thorax</div>
-        <h2 class="section-title">Pure flight muscle</h2>
-        <p class="section-body">Three fused segments house the indirect flight muscles that power both wing pairs. The thorax is the engine that makes a wasp airborne in milliseconds.</p>
-      </div>
-    </section>
-
-    <section class="section" id="sec-petiole">
-      <span class="section-number">[03]</span>
-      <div class="section-content right">
-        <div class="section-overline">Petiole</div>
-        <h2 class="section-title">The wasp waist</h2>
-        <p class="section-body">The narrow petiole connecting thorax to abdomen allows the abdomen to curl underneath for stinging. Form follows function.</p>
-      </div>
-    </section>
-
-    <section class="section" id="sec-stinger">
-      <span class="section-number">[04]</span>
-      <div class="section-content">
-        <div class="section-overline">Stinger</div>
-        <h2 class="section-title">Smooth. Reusable.</h2>
-        <p class="section-body">Unlike a bee's barbed stinger, a wasp's ovipositor is smooth — it can sting repeatedly without self-destructing. The venom is alkaline, designed to paralyze prey.</p>
-      </div>
-    </section>
-
-    <section class="section" id="sec-eyes">
-      <span class="section-number">[05]</span>
-      <div class="section-content right">
-        <div class="section-overline">Compound Eyes</div>
-        <h2 class="section-title">You were seen first</h2>
-        <p class="section-body">Nearly 360-degree vision from thousands of hexagonal lenses. Wasps detect ultraviolet patterns invisible to humans. They track movement faster than any vertebrate eye.</p>
-      </div>
-    </section>
-
-    <section class="section" id="sec-wings">
-      <span class="section-number">[06]</span>
-      <div class="section-content">
-        <div class="section-overline">Wings</div>
-        <h2 class="section-title">40 beats per second</h2>
-        <p class="section-body">Two pairs of wings, hooked together mid-flight by tiny hamuli. Forewings generate lift, hindwings stabilize. At rest, they fold flat — ready to deploy in an instant.</p>
-      </div>
-    </section>
-
-    <section class="section" style="min-height:40vh"></section>
+  <!-- Animation picker -->
+  <div id="picker">
+    <button class="pick-btn active" data-anim="0">Idle</button>
+    <button class="pick-btn" data-anim="1">Hover</button>
+    <button class="pick-btn" data-anim="2">Fly</button>
   </div>
 
-  <!-- GSAP -->
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+  <!-- Labels -->
+  <div id="labels">
+    <div class="label-panel" data-label="0">
+      <p class="label-name">Mandibula</p>
+      <p class="label-sub"><span class="label-dot"></span>Mastication &amp; manipulation</p>
+      <p class="label-sub"><span class="label-dot"></span>Prey processing</p>
+    </div>
+    <div class="label-panel" data-label="1">
+      <p class="label-name">Thorax</p>
+      <p class="label-sub"><span class="label-dot"></span>Indirect flight muscles</p>
+      <p class="label-sub"><span class="label-dot"></span>Wing articulation</p>
+    </div>
+    <div class="label-panel" data-label="2">
+      <p class="label-name">Abdomen</p>
+      <p class="label-sub"><span class="label-dot"></span>Venom sac + stinger</p>
+      <p class="label-sub"><span class="label-dot"></span>Tracheal system</p>
+    </div>
+  </div>
+
+  <!-- Custom cursor -->
+  <div id="cursor"></div>
 
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
   <script type="module">
-    import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+  import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+  import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+  import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+  import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
-    gsap.registerPlugin(ScrollTrigger);
+  // ── SCENE ──────────────────────────────────────────────────────
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
+  camera.position.set(-3, 1.5, 3);
 
-    // ── SCENE ────────────────────────────────────────────────────
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x06060a, 0.3);
+  const canvas = document.getElementById('webglCanvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(0x000000);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.4;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.01, 50);
-    camera.position.set(0, 0.1, 2.8);
+  // ── POST-PROCESSING ────────────────────────────────────────────
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(innerWidth, innerHeight);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.setClearColor(0x09090B);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.5;
-    document.getElementById('canvas-wrap').appendChild(renderer.domElement);
+  // FXAA
+  const fxaa = new ShaderPass(FXAAShader);
+  fxaa.uniforms.resolution.value.set(1/(innerWidth*devicePixelRatio), 1/(innerHeight*devicePixelRatio));
+  composer.addPass(fxaa);
 
-    // ── CONTROLS ─────────────────────────────────────────────────
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.enablePan = false;
-    controls.minDistance = 1.0;
-    controls.maxDistance = 5.0;
-    controls.rotateSpeed = 0.4;
-    controls.zoomSpeed = 0.6;
-    controls.target.set(0, 0, 0);
+  // Vignette (custom shader)
+  const vignetteShader = {
+    uniforms: { tDiffuse: { value: null }, offset: { value: 0.5 }, darkness: { value: 0.6 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader: `uniform sampler2D tDiffuse; uniform float offset; uniform float darkness; varying vec2 vUv;
+      void main(){ vec4 c=texture2D(tDiffuse,vUv); vec2 uv=(vUv-0.5)*2.0; float d=1.0-smoothstep(offset,offset+0.5,length(uv)); c.rgb*=mix(1.0-darkness,1.0,d); gl_FragColor=c; }`
+  };
+  composer.addPass(new ShaderPass(vignetteShader));
 
-    // ── LIGHTING ─────────────────────────────────────────────────
-    scene.add(new THREE.AmbientLight(0x333344, 0.6));
-    const key = new THREE.DirectionalLight(0xFFE4B5, 2.5);
-    key.position.set(4, 4, 5); scene.add(key);
-    const rim = new THREE.DirectionalLight(0x4466CC, 1.0);
-    rim.position.set(-4, 1, -4); scene.add(rim);
-    const fill = new THREE.DirectionalLight(0xFFDDBB, 0.4);
-    fill.position.set(-2, -2, 3); scene.add(fill);
+  // ── CONTROLS ───────────────────────────────────────────────────
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.1;
+  controls.enablePan = false;
+  controls.enableZoom = true;
+  controls.minDistance = 1.5;
+  controls.maxDistance = 8;
+  controls.minPolarAngle = 0;
+  controls.maxPolarAngle = Math.PI * 0.45;
+  controls.target.set(0, 0.1, 0);
+  controls.rotateSpeed = 0.5;
 
-    // Environment
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const es = new THREE.Scene();
-    es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x0a0a12,side:THREE.BackSide})));
-    const sg = new THREE.SphereGeometry(0.5,8,8);
-    const s1 = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xFFFFFF}));
-    s1.position.set(4,4,4); es.add(s1);
-    const s2 = new THREE.Mesh(sg.clone(), new THREE.MeshBasicMaterial({color:0x3355AA}));
-    s2.position.set(-4,-1,-3); es.add(s2);
-    scene.environment = pmrem.fromScene(es, 0.04).texture;
-    pmrem.dispose();
+  // ── LIGHTING ───────────────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0x404040, 0.4));
+  const dirLight = new THREE.DirectionalLight(0xfff5e6, 2.0);
+  dirLight.position.set(4, 6, 4);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(1024, 1024);
+  dirLight.shadow.camera.left = -3; dirLight.shadow.camera.right = 3;
+  dirLight.shadow.camera.top = 3; dirLight.shadow.camera.bottom = -3;
+  dirLight.shadow.camera.near = 0.1; dirLight.shadow.camera.far = 20;
+  dirLight.shadow.bias = -0.001;
+  dirLight.shadow.radius = 3;
+  scene.add(dirLight);
 
-    // ── PARTICLES ────────────────────────────────────────────────
-    const PC = 300;
-    const pGeo = new THREE.BufferGeometry();
-    const pp = new Float32Array(PC*3), pv = new Float32Array(PC*3);
-    for(let i=0;i<PC;i++){
-      pp[i*3]=(Math.random()-.5)*5; pp[i*3+1]=(Math.random()-.5)*3; pp[i*3+2]=(Math.random()-.5)*5;
-      pv[i*3]=(Math.random()-.5)*.0006; pv[i*3+1]=Math.random()*.0004+.0001; pv[i*3+2]=(Math.random()-.5)*.0006;
-    }
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
-    scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({
-      color:0xB8964E, size:0.005, transparent:true, opacity:0.2,
-      blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true
-    })));
+  const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.6);
+  fillLight.position.set(-3, 2, -2); scene.add(fillLight);
 
-    // ── STATE ────────────────────────────────────────────────────
-    let waspModel = null, waspPivot = null;
-    const clock = new THREE.Clock();
-    let animState = 'idle';
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  rimLight.position.set(0, 3, -4); scene.add(rimLight);
 
-    // Simple 2D noise approximation for organic movement
-    function noise(t) {
-      return Math.sin(t*1.1) * 0.3 + Math.sin(t*2.3) * 0.2 + Math.sin(t*4.7) * 0.1 +
-             Math.sin(t*0.7) * 0.25 + Math.cos(t*3.1) * 0.15;
-    }
+  // Environment
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const es = new THREE.Scene();
+  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x111118,side:THREE.BackSide})));
+  const sg = new THREE.SphereGeometry(0.3,8,8);
+  const sp1 = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({color:0xffffff})); sp1.position.set(4,4,4); es.add(sp1);
+  const sp2 = new THREE.Mesh(sg.clone(), new THREE.MeshBasicMaterial({color:0x4466aa})); sp2.position.set(-3,1,-3); es.add(sp2);
+  scene.environment = pmrem.fromScene(es,0.04).texture;
+  pmrem.dispose();
 
-    // ── LOAD MODEL ───────────────────────────────────────────────
-    new GLTFLoader().load('./wasp.glb', (gltf) => {
-      waspPivot = new THREE.Group();
+  // ── GROUND PLANE ───────────────────────────────────────────────
+  const groundGeo = new THREE.PlaneGeometry(40, 40);
+  const groundMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = -0.8;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Grid helper (subtle)
+  const grid = new THREE.GridHelper(20, 40, 0x222222, 0x111111);
+  grid.position.y = -0.79;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.4;
+  scene.add(grid);
+
+  // ── STATE ──────────────────────────────────────────────────────
+  let waspModel = null;
+  let mixer = null;
+  const actions = [];
+  let currentAction = null;
+  let labelsShown = true;
+  const clock = new THREE.Clock();
+  const mouse = { x: 0, y: 0, active: false, timer: null };
+
+  // ── LABEL ANCHORS (world-space positions) ──────────────────────
+  const labelAnchors = [
+    new THREE.Vector3(0.4, 0, 0.15),    // Mandibula (front-right)
+    new THREE.Vector3(-0.1, 0.25, 0),    // Thorax (top-center)
+    new THREE.Vector3(-0.4, 0.05, -0.1), // Abdomen (back-left)
+  ];
+  const labelEndpoints = [
+    new THREE.Vector3(0.8, 0.3, 0.4),
+    new THREE.Vector3(-0.5, 0.6, 0),
+    new THREE.Vector3(-0.9, 0.4, -0.2),
+  ];
+  const labelPanels = document.querySelectorAll('.label-panel');
+
+  // ── 3D LABEL LINES ─────────────────────────────────────────────
+  const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 });
+  const labelLines = [];
+  for (let i = 0; i < 3; i++) {
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      labelAnchors[i], labelEndpoints[i]
+    ]);
+    const line = new THREE.Line(geo, lineMaterial.clone());
+    scene.add(line);
+    labelLines.push(line);
+  }
+
+  // ── LOAD MODEL ─────────────────────────────────────────────────
+  const loaderFill = document.getElementById('loader-fill');
+  const loaderTitle = document.getElementById('loader-title');
+
+  new GLTFLoader().load('./wasp.glb',
+    (gltf) => {
       waspModel = gltf.scene;
+      scene.add(waspModel);
 
+      // Center + scale
       const box = new THREE.Box3().setFromObject(waspModel);
       const center = box.getCenter(new THREE.Vector3());
       waspModel.position.sub(center);
-
       const size = box.getSize(new THREE.Vector3());
-      waspModel.scale.setScalar(1.8 / Math.max(size.x, size.y, size.z));
+      const s = 1.5 / Math.max(size.x, size.y, size.z);
+      waspModel.scale.setScalar(s);
+      waspModel.position.y += 0.1;
 
-      waspPivot.add(waspModel);
-      scene.add(waspPivot);
+      // Shadows
+      waspModel.traverse(child => {
+        if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
+      });
 
-      // Reveal UI
-      document.getElementById('loader').classList.add('done');
+      // Animations (if any baked in the model)
+      if (gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(waspModel);
+        gltf.animations.forEach(clip => {
+          const action = mixer.clipAction(clip);
+          actions.push(action);
+        });
+        if (actions[0]) { actions[0].play(); currentAction = actions[0]; }
+      }
+
+      // Dismiss loader
+      loaderFill.style.width = '100%';
+      loaderTitle.style.opacity = '1';
+      loaderTitle.style.transform = 'translateY(0)';
       setTimeout(() => {
-        document.getElementById('loader').style.display = 'none';
-        document.querySelector('.header-left').classList.add('visible');
-        document.getElementById('controls').classList.add('visible');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.add('visible'));
-        initScroll();
-      }, 1000);
-    });
-
-    // ── ANIMATION — noise-based, not sine-bouncing ───────────────
-    function updateAnimation(t) {
-      if (!waspPivot) return;
-
-      const speed = animState === 'fly' ? 1.8 : animState === 'hover' ? 1.0 : 0.3;
-      const amp = animState === 'fly' ? 0.02 : animState === 'hover' ? 0.012 : 0.003;
-
-      // Noise-driven position (organic, non-periodic)
-      waspPivot.position.x = noise(t * speed) * amp;
-      waspPivot.position.y = noise(t * speed * 0.8 + 100) * amp;
-      waspPivot.position.z = noise(t * speed * 0.6 + 200) * amp * 0.5;
-
-      // Attitude — lean into movement direction
-      const lean = animState === 'idle' ? 0.01 : animState === 'hover' ? 0.04 : 0.08;
-      waspPivot.rotation.x = -lean + noise(t * speed * 0.5 + 50) * lean * 0.3;
-      waspPivot.rotation.z = noise(t * speed * 0.7 + 150) * lean * 0.5;
-    }
-
-    // ── SCROLL — camera + section reveals ────────────────────────
-    // Proxy for scroll-driven camera (proxy pattern from skill)
-    const camProxy = { x: 0, y: 0.1, z: 2.8 };
-
-    function initScroll() {
-      // Progress bar
-      gsap.to('#progress', {
-        width: '100%', ease: 'none',
-        scrollTrigger: { trigger: '#content', start: 'top top', end: 'bottom bottom', scrub: true }
-      });
-
-      // Camera moves per section (subtle, not dramatic)
-      const camTL = gsap.timeline({
-        scrollTrigger: { trigger: '#content', start: 'top top', end: 'bottom bottom', scrub: 1.5 }
-      });
-      camTL.to(camProxy, { x: 0.3, y: 0.15, z: 2.5, duration: 1 })   // thorax
-           .to(camProxy, { x: -0.2, y: 0.0, z: 2.6, duration: 1 })    // petiole
-           .to(camProxy, { x: 0.15, y: -0.05, z: 2.3, duration: 1 })   // stinger
-           .to(camProxy, { x: -0.15, y: 0.2, z: 2.2, duration: 1 })    // eyes
-           .to(camProxy, { x: 0, y: 0.35, z: 2.6, duration: 1 });      // wings
-
-      // Section content reveals (once, clean)
-      document.querySelectorAll('.section-content').forEach(el => {
-        gsap.to(el, {
-          opacity: 1, y: 0, duration: 0.8, ease: 'power2.out',
-          scrollTrigger: { trigger: el.closest('.section'), start: 'top 75%', once: true }
-        });
-      });
-
-      // Section numbers
-      document.querySelectorAll('.section-number').forEach(num => {
-        gsap.to(num, {
-          opacity: 0.4, duration: 0.5,
-          scrollTrigger: { trigger: num.closest('.section'), start: 'top 80%', once: true }
-        });
-      });
-    }
-
-    // ── STATE BUTTONS ────────────────────────────────────────────
-    document.querySelectorAll('.state-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        animState = btn.dataset.state;
-        document.querySelectorAll('.state-btn').forEach(b => b.classList.toggle('active', b === btn));
-      });
-    });
-
-    // ── ANATOMY LABELS — 3D anchored ─────────────────────────────
-    const labelAnchors = {
-      mandibles: { el: document.getElementById('label-mandibles'), pos: new THREE.Vector3(0.35, -0.02, 0.1) },
-      thorax:    { el: document.getElementById('label-thorax'),    pos: new THREE.Vector3(0, 0.15, -0.05) },
-      abdomen:   { el: document.getElementById('label-abdomen'),   pos: new THREE.Vector3(-0.3, 0.0, -0.05) },
-    };
-
-    function updateLabels() {
-      if (!waspPivot) return;
-      for (const {el, pos} of Object.values(labelAnchors)) {
-        const wp = pos.clone();
-        waspPivot.localToWorld(wp);
-        const p = wp.project(camera);
-        if (p.z < 1) {
-          el.style.left = `${(p.x*.5+.5)*innerWidth}px`;
-          el.style.top = `${(-p.y*.5+.5)*innerHeight}px`;
-          el.classList.add('active');
-        } else {
-          el.classList.remove('active');
-        }
+        const loader = document.getElementById('loader');
+        loader.style.transition = 'opacity 0.6s';
+        loader.style.opacity = '0';
+        setTimeout(() => {
+          loader.style.display = 'none';
+          document.getElementById('menu').classList.add('visible');
+          document.getElementById('picker').classList.add('visible');
+          showLabels();
+        }, 600);
+      }, 800);
+    },
+    (progress) => {
+      if (progress.total > 0) {
+        const pct = Math.round(progress.loaded / progress.total * 100);
+        loaderFill.style.width = pct + '%';
       }
     }
+  );
 
-    // ── RENDER LOOP ──────────────────────────────────────────────
-    function animate() {
-      requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-
-      updateAnimation(t);
-      controls.update();
-
-      // Apply scroll proxy to camera (subtle shifts, not overriding orbit)
-      // Only apply when user isn't actively dragging
-      if (!controls.isDragging) {
-        camera.position.x += (camProxy.x - camera.position.x) * 0.02;
-        camera.position.y += (camProxy.y - camera.position.y) * 0.02;
-        // Don't override Z — let orbit controls handle zoom
-      }
-
-      updateLabels();
-
-      // Particles
-      const pa = pGeo.attributes.position.array;
-      for(let i=0;i<PC;i++){
-        pa[i*3]+=pv[i*3]; pa[i*3+1]+=pv[i*3+1]; pa[i*3+2]+=pv[i*3+2];
-        if(Math.abs(pa[i*3])>2.5)pa[i*3]*=-.9;
-        if(pa[i*3+1]>1.5)pa[i*3+1]=-1.5;
-        if(Math.abs(pa[i*3+2])>2.5)pa[i*3+2]*=-.9;
-      }
-      pGeo.attributes.position.needsUpdate=true;
-
-      renderer.render(scene, camera);
+  // ── ANIMATION SWITCHING ────────────────────────────────────────
+  function switchAnimation(index) {
+    if (!mixer || !actions[index]) {
+      // No baked animations — just toggle label visibility
+      const isIdle = index === 0;
+      if (isIdle && !labelsShown) showLabels();
+      if (!isIdle && labelsShown) hideLabels();
+      return;
     }
-    animate();
 
-    // ── HEADER FADE ON SCROLL ─────────────────────────────────────
-    const headerLeft = document.querySelector('.header-left');
-    addEventListener('scroll', () => {
-      if (scrollY > 200) headerLeft?.classList.add('scrolled');
-      else headerLeft?.classList.remove('scrolled');
-    });
+    const newAction = actions[index];
+    if (newAction === currentAction) return;
 
-    // ── RESIZE ───────────────────────────────────────────────────
-    addEventListener('resize', () => {
-      camera.aspect = innerWidth/innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(innerWidth, innerHeight);
+    if (currentAction) {
+      currentAction.fadeOut(0.5);
+    }
+    newAction.reset().fadeIn(0.5).play();
+    currentAction = newAction;
+
+    // Labels only in Idle
+    if (index === 0 && !labelsShown) showLabels();
+    if (index !== 0 && labelsShown) hideLabels();
+  }
+
+  function showLabels() {
+    labelsShown = true;
+    labelPanels.forEach((p, i) => {
+      setTimeout(() => p.classList.add('visible'), i * 140);
     });
+    labelLines.forEach(l => { l.material.opacity = 0.4; });
+  }
+
+  function hideLabels() {
+    labelsShown = false;
+    labelPanels.forEach(p => p.classList.remove('visible'));
+    labelLines.forEach(l => { l.material.opacity = 0; });
+  }
+
+  document.querySelectorAll('.pick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.anim);
+      switchAnimation(idx);
+      document.querySelectorAll('.pick-btn').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  // ── CUSTOM CURSOR ──────────────────────────────────────────────
+  const cursorEl = document.getElementById('cursor');
+  document.addEventListener('pointermove', (e) => {
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    cursorEl.style.left = e.clientX + 'px';
+    cursorEl.style.top = e.clientY + 'px';
+    cursorEl.classList.add('active');
+    clearTimeout(mouse.timer);
+    mouse.timer = setTimeout(() => cursorEl.classList.remove('active'), 2000);
+  });
+
+  // ── UPDATE LABELS ──────────────────────────────────────────────
+  function updateLabels() {
+    if (!waspModel) return;
+    for (let i = 0; i < 3; i++) {
+      // Project endpoint to screen
+      const wp = labelEndpoints[i].clone();
+      if (waspModel) {
+        // Transform by model position/scale
+        wp.multiplyScalar(waspModel.scale.x);
+        wp.add(waspModel.position);
+      }
+      const projected = wp.clone().project(camera);
+
+      if (projected.z < 1) {
+        const sx = (projected.x * 0.5 + 0.5) * innerWidth;
+        const sy = (-projected.y * 0.5 + 0.5) * innerHeight;
+        labelPanels[i].style.transform = `translate(${sx}px, ${sy}px)`;
+      }
+
+      // Update line geometry
+      const lineGeo = labelLines[i].geometry;
+      const positions = lineGeo.attributes.position.array;
+      const anchor = labelAnchors[i].clone().multiplyScalar(waspModel?.scale.x || 1).add(waspModel?.position || new THREE.Vector3());
+      const end = wp;
+      positions[0] = anchor.x; positions[1] = anchor.y; positions[2] = anchor.z;
+      positions[3] = end.x; positions[4] = end.y; positions[5] = end.z;
+      lineGeo.attributes.position.needsUpdate = true;
+    }
+  }
+
+  // ── RENDER LOOP ────────────────────────────────────────────────
+  function animate() {
+    requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+    if (mixer) mixer.update(delta);
+    controls.update();
+    updateLabels();
+    composer.render();
+  }
+  animate();
+
+  // ── RESIZE ─────────────────────────────────────────────────────
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    composer.setSize(innerWidth, innerHeight);
+    fxaa.uniforms.resolution.value.set(1/(innerWidth*devicePixelRatio), 1/(innerHeight*devicePixelRatio));
+  });
   </script>
 </body>
 </html>
