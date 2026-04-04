@@ -313,19 +313,17 @@
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
 
-    // Wing flutter — rotation with proper Blender-set origins at wing root
+    // Wing flutter — all wings same direction, hindwings slightly delayed
     const t = clock.getElapsedTime();
     wingMeshes.forEach((wing, i) => {
-      const isRight = wing.name.includes('_R');
-      const sign = isRight ? -1 : 1;
-      const phase = wing.name.includes('Hind') ? Math.PI * 0.25 : 0;
+      const phase = wing.name.includes('Hind') ? 0.2 : 0;
 
       if (animState === 'idle') {
-        wing.rotation.z = sign * Math.sin(t * 0.6 + i) * 0.02;
+        wing.rotation.z = Math.sin(t * 0.6 + i * 0.5) * 0.015;
       } else if (animState === 'hover') {
-        wing.rotation.z = sign * Math.sin(t * 25 + phase) * 0.4;
+        wing.rotation.z = Math.sin(t * 25 + phase) * 0.35;
       } else {
-        wing.rotation.z = sign * Math.sin(t * 40 + phase) * 0.6;
+        wing.rotation.z = Math.sin(t * 40 + phase) * 0.5;
       }
     });
   }
