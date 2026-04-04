@@ -131,7 +131,7 @@
   camera.position.set(-6, 3, 6);
 
   const canvas = document.getElementById('c');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
   renderer.setSize(innerWidth, innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0xe8e8ec);
@@ -225,15 +225,32 @@
     waspModel.scale.setScalar(2.2/Math.max(size.x,size.y,size.z));
     waspModel.position.y=0.1;
 
-    // Find wing meshes + enable shadows
+    // Find wing meshes, create pivot groups at wing centers
     waspModel.traverse(c=>{
       if(c.isMesh){
         c.castShadow=true; c.receiveShadow=true;
         if(c.name.startsWith('Wing')){
-          wingMeshes.push(c);
-          // Store original rotation for flutter baseline
-          c.userData.baseRotZ = c.rotation.z;
-          console.log('Wing found:', c.name);
+          // Get the wing's bounding box center for pivot point
+          c.geometry.computeBoundingBox();
+          const center = new THREE.Vector3();
+          c.geometry.boundingBox.getCenter(center);
+
+          // Create a pivot group at the wing's center
+          const pivot = new THREE.Group();
+          pivot.position.copy(center);
+          pivot.name = c.name + '_pivot';
+
+          // Offset the wing geometry so it rotates around the pivot
+          c.geometry.translate(-center.x, -center.y, -center.z);
+
+          // Re-parent: wing mesh goes inside pivot, pivot goes where wing was
+          const parent = c.parent;
+          parent.add(pivot);
+          pivot.add(c);
+          c.position.set(0, 0, 0);
+
+          wingMeshes.push({ mesh: c, pivot: pivot, name: c.name });
+          console.log('Wing:', c.name, 'pivot at', center.x.toFixed(3), center.y.toFixed(3), center.z.toFixed(3));
         }
       }
     });
@@ -314,24 +331,21 @@
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
 
-    // Wing flutter — rotate on local X axis (flap up/down)
+    // Wing flutter — rotate pivots around wing connection point
     const t = clock.getElapsedTime();
-    wingMeshes.forEach((wing, i) => {
-      // Right wings flutter opposite to left wings
-      const isRight = wing.name.includes('_R');
+    wingMeshes.forEach((w, i) => {
+      const p = w.pivot || w;
+      const name = w.name || w.mesh?.name || '';
+      const isRight = name.includes('_R');
       const sign = isRight ? -1 : 1;
-      // Hind wings slightly delayed
-      const phase = wing.name.includes('Hind') ? Math.PI * 0.3 : 0;
+      const phase = name.includes('Hind') ? Math.PI * 0.3 : 0;
 
       if (animState === 'idle') {
-        wing.rotation.x = Math.sin(t * 0.5 + i * 2) * 0.015 * sign;
-        wing.rotation.y = 0;
+        p.rotation.x = Math.sin(t * 0.5 + i * 2) * 0.02 * sign;
       } else if (animState === 'hover') {
-        wing.rotation.x = Math.sin(t * 25 + phase) * 0.25 * sign;
-        wing.rotation.y = Math.sin(t * 25 + phase) * 0.05;
+        p.rotation.x = Math.sin(t * 25 + phase) * 0.3 * sign;
       } else {
-        wing.rotation.x = Math.sin(t * 40 + phase) * 0.35 * sign;
-        wing.rotation.y = Math.sin(t * 40 + phase) * 0.08;
+        p.rotation.x = Math.sin(t * 40 + phase) * 0.4 * sign;
       }
     });
   }
