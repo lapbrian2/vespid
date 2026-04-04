@@ -87,6 +87,36 @@ elif len(wings) == 3:
 
 print(f"Wing names: {wing_names}")
 
+# Set wing origins to the point closest to body center (wing root)
+# This makes rotation in Three.js pivot around the wing attachment point
+print("\n=== SETTING WING ORIGINS ===")
+body_center = None
+
+for wing_obj in wings:
+    # Find the vertex closest to body center (wing root)
+    bpy.ops.object.select_all(action='DESELECT')
+    wing_obj.select_set(True)
+    bpy.context.view_layer.objects.active = wing_obj
+
+    # Get all vertices in world space
+    closest_dist = float('inf')
+    closest_co = None
+    for v in wing_obj.data.vertices:
+        world_co = wing_obj.matrix_world @ v.co
+        dist = world_co.length  # Distance from world origin (approx body center)
+        if dist < closest_dist:
+            closest_dist = dist
+            closest_co = world_co.copy()
+
+    if closest_co:
+        # Set cursor to wing root, then set origin to cursor
+        bpy.context.scene.cursor.location = closest_co
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        print(f"  {wing_obj.name}: origin set to wing root at ({closest_co.x:.3f}, {closest_co.y:.3f}, {closest_co.z:.3f})")
+
+# Reset cursor
+bpy.context.scene.cursor.location = (0, 0, 0)
+
 # Join all body parts back into one mesh called "Body"
 if len(body_parts) > 1:
     print(f"\nJoining {len(body_parts)} body fragments...")

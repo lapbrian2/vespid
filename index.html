@@ -131,7 +131,7 @@
   camera.position.set(-6, 3, 6);
 
   const canvas = document.getElementById('c');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(innerWidth, innerHeight);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0xe8e8ec);
@@ -313,18 +313,19 @@
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
 
-    // Wing flutter — position-based (translate Y up/down)
+    // Wing flutter — rotation with proper Blender-set origins at wing root
     const t = clock.getElapsedTime();
     wingMeshes.forEach((wing, i) => {
-      const base = wing.userData.baseY || 0;
-      const phase = i * Math.PI * 0.25; // offset each wing
+      const isRight = wing.name.includes('_R');
+      const sign = isRight ? -1 : 1;
+      const phase = wing.name.includes('Hind') ? Math.PI * 0.25 : 0;
 
       if (animState === 'idle') {
-        wing.position.y = base + Math.sin(t * 0.5 + phase) * 0.002;
+        wing.rotation.z = sign * Math.sin(t * 0.6 + i) * 0.02;
       } else if (animState === 'hover') {
-        wing.position.y = base + Math.sin(t * 30 + phase) * 0.015;
+        wing.rotation.z = sign * Math.sin(t * 25 + phase) * 0.4;
       } else {
-        wing.position.y = base + Math.sin(t * 45 + phase) * 0.025;
+        wing.rotation.z = sign * Math.sin(t * 40 + phase) * 0.6;
       }
     });
   }
