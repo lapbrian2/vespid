@@ -47,13 +47,13 @@
     .label-sub{font-size:1.1em;font-weight:300;color:#444;background:rgba(255,255,255,0.8);padding:1px 6px;margin-top:3px;display:flex;align-items:center;gap:5px}
     .label-dot{width:3px;height:3px;border-radius:50%;background:#333;flex-shrink:0}
 
-    /* ── Cinematic text overlay ───────── */
-    #cinema{position:fixed;top:0;left:0;right:0;z-index:6;pointer-events:none;padding:60px 40px 0}
-    .cinema-block{margin-bottom:20px}
-    .cinema-block .cinema-overline,.cinema-block .cinema-title,.cinema-block .cinema-body{opacity:0}
-    .cinema-overline{font-size:1.1em;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:#B8964E;margin-bottom:4px}
-    .cinema-title{font-size:3.2em;font-weight:300;color:#111;letter-spacing:-0.5px;line-height:1.15}
-    .cinema-body{font-size:1.4em;font-weight:300;color:#555;line-height:1.6;max-width:380px;margin-top:8px}
+    /* ── Story text — cinematic split-text ── */
+    #story{position:fixed;top:0;left:0;right:0;z-index:6;pointer-events:none;padding:70px 40px 0}
+    .story-slide{position:absolute;top:70px;left:40px;right:40px}
+    .story-overline{font-size:1.1em;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:#B8964E;margin-bottom:6px}
+    .story-title{font-size:clamp(2.4em,4vw,3.6em);font-weight:300;color:#111;letter-spacing:-0.5px;line-height:1.15;margin-bottom:10px}
+    .story-body{font-size:1.4em;font-weight:300;color:#555;line-height:1.7;max-width:420px}
+    .split-char{display:inline-block;opacity:0}
 
     /* ── Cursor ───────────────────────── */
     #cursor{position:fixed;width:16px;height:16px;border-radius:50%;background:#000;pointer-events:none;z-index:20;mix-blend-mode:difference;opacity:0;transform:translate(-50%,-50%);transition:opacity 0.3s}
@@ -89,32 +89,32 @@
   <div class="label-panel" id="lbl1"><p class="label-name">Thorax</p><p class="label-sub"><span class="label-dot"></span>Indirect flight muscles</p><p class="label-sub"><span class="label-dot"></span>Wing articulation</p></div>
   <div class="label-panel" id="lbl2"><p class="label-name">Abdomen</p><p class="label-sub"><span class="label-dot"></span>Venom sac + stinger</p><p class="label-sub"><span class="label-dot"></span>Tracheal system</p></div>
 
-  <!-- Cinematic text — cycles through anatomy facts -->
-  <div id="cinema">
-    <div class="cinema-block" data-idx="0">
-      <div class="cinema-overline">Thorax</div>
-      <div class="cinema-title">Pure flight muscle</div>
-      <div class="cinema-body">Three fused segments house the indirect flight muscles that power both wing pairs. The thorax is the engine.</div>
+  <!-- Story text — character-by-character cinematic reveal -->
+  <div id="story">
+    <div class="story-slide" data-slide="0">
+      <p class="story-overline split-text">Vespa orientalis</p>
+      <h2 class="story-title split-text">The Oriental Hornet</h2>
+      <p class="story-body split-text">The only known insect that harvests solar energy. A yellow stripe on its abdomen contains xanthopterin — a pigment that converts light into electricity.</p>
     </div>
-    <div class="cinema-block" data-idx="1">
-      <div class="cinema-overline">Petiole</div>
-      <div class="cinema-title">The wasp waist</div>
-      <div class="cinema-body">The narrow petiole allows the abdomen to curl underneath for stinging. Form follows function.</div>
+    <div class="story-slide" data-slide="1">
+      <p class="story-overline split-text">Thorax</p>
+      <h2 class="story-title split-text">Pure flight muscle</h2>
+      <p class="story-body split-text">Three fused segments. Two wing pairs. Forty beats per second. The thorax is the engine that makes a wasp airborne in milliseconds.</p>
     </div>
-    <div class="cinema-block" data-idx="2">
-      <div class="cinema-overline">Stinger</div>
-      <div class="cinema-title">Smooth. Reusable.</div>
-      <div class="cinema-body">Unlike a bee's barbed stinger, a wasp's is smooth — it can sting repeatedly. The venom paralyzes prey.</div>
+    <div class="story-slide" data-slide="2">
+      <p class="story-overline split-text">Stinger</p>
+      <h2 class="story-title split-text">Smooth. Reusable.</h2>
+      <p class="story-body split-text">Unlike a bee, a wasp's stinger is smooth. It can sting repeatedly without self-destructing. The venom is alkaline — designed to paralyze, not warn.</p>
     </div>
-    <div class="cinema-block" data-idx="3">
-      <div class="cinema-overline">Compound Eyes</div>
-      <div class="cinema-title">You were seen first</div>
-      <div class="cinema-body">Nearly 360-degree vision from thousands of hexagonal lenses. They track movement faster than any vertebrate eye.</div>
+    <div class="story-slide" data-slide="3">
+      <p class="story-overline split-text">Vision</p>
+      <h2 class="story-title split-text">You were seen first</h2>
+      <p class="story-body split-text">Thousands of hexagonal lenses give nearly 360-degree vision. They detect ultraviolet patterns invisible to us. They track movement faster than any vertebrate eye.</p>
     </div>
-    <div class="cinema-block" data-idx="4">
-      <div class="cinema-overline">Wings</div>
-      <div class="cinema-title">40 beats per second</div>
-      <div class="cinema-body">Two pairs hooked together mid-flight. Forewings generate lift, hindwings stabilize. Ready to deploy in an instant.</div>
+    <div class="story-slide" data-slide="4">
+      <p class="story-overline split-text">Anatomy</p>
+      <h2 class="story-title split-text">Built to hunt</h2>
+      <p class="story-body split-text">Mandibles for cutting. A petiole that allows the abdomen to curl under for stinging. Six legs tipped with claws. Every part serves the predator.</p>
     </div>
   </div>
 
@@ -314,37 +314,62 @@
     });
   });
 
-  // ── CINEMATIC TEXT — GSAP timeline, not setInterval ──────────
-  const cinemaBlocks = gsap.utils.toArray('.cinema-block');
+  // ── CINEMATIC TEXT — manual SplitText with char-by-char GSAP animation ──
+
+  // Split all .split-text elements into individual character spans
+  function splitTextToChars(el) {
+    const text = el.textContent;
+    el.textContent = '';
+    const chars = [];
+    for (const char of text) {
+      const span = document.createElement('span');
+      span.className = 'split-char';
+      span.textContent = char === ' ' ? '\u00A0' : char;
+      el.appendChild(span);
+      chars.push(span);
+    }
+    return chars;
+  }
+
+  // Pre-split all story text
+  const storySlides = gsap.utils.toArray('.story-slide');
+  const slideChars = storySlides.map(slide => {
+    const allChars = [];
+    slide.querySelectorAll('.split-text').forEach(el => {
+      allChars.push(splitTextToChars(el));
+    });
+    return allChars; // [[overlineChars], [titleChars], [bodyChars]]
+  });
 
   function startCinematicText() {
-    const tl = gsap.timeline({ repeat: -1 });
+    const master = gsap.timeline({ repeat: -1 });
 
-    cinemaBlocks.forEach((block, i) => {
-      const overline = block.querySelector('.cinema-overline');
-      const title = block.querySelector('.cinema-title');
-      const body = block.querySelector('.cinema-body');
+    storySlides.forEach((slide, i) => {
+      const chars = slideChars[i]; // [overlineChars, titleChars, bodyChars]
+      const offset = i * 8; // 8 seconds per slide
 
-      // Entrance — staggered slide down from top
-      tl.fromTo(overline,
-        { opacity: 0, y: -30 },
-        { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' },
-        i * 7
-      )
-      .fromTo(title,
-        { opacity: 0, y: -20 },
-        { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' },
-        i * 7 + 0.15
-      )
-      .fromTo(body,
-        { opacity: 0, y: -15 },
-        { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' },
-        i * 7 + 0.35
-      )
-      // Hold for 4 seconds, then exit
-      .to([overline, title, body], {
-        opacity: 0, y: 15, duration: 0.5, ease: 'power2.in', stagger: 0.05
-      }, i * 7 + 5.5);
+      // Entrance — characters reveal from left, staggered per element
+      chars.forEach((charGroup, g) => {
+        master.fromTo(charGroup,
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1, y: 0,
+            duration: 0.4,
+            ease: 'power3.out',
+            stagger: 0.015, // char by char
+          },
+          offset + g * 0.3 // each element starts 0.3s after previous
+        );
+      });
+
+      // Hold for ~4s, then exit — all chars fade out together
+      const allCharsFlat = chars.flat();
+      master.to(allCharsFlat, {
+        opacity: 0, y: -8,
+        duration: 0.3,
+        ease: 'power2.in',
+        stagger: 0.005,
+      }, offset + 6);
     });
   }
 
