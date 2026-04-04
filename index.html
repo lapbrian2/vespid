@@ -314,19 +314,24 @@
     waspPivot.position.set(animProxy.px, animProxy.py, animProxy.pz);
     waspPivot.rotation.set(animProxy.rx, animProxy.ry, animProxy.rz);
 
-    // Wing flutter
+    // Wing flutter — rotate on local X axis (flap up/down)
     const t = clock.getElapsedTime();
     wingMeshes.forEach((wing, i) => {
-      const base = wing.userData.baseRotZ || 0;
+      // Right wings flutter opposite to left wings
+      const isRight = wing.name.includes('_R');
+      const sign = isRight ? -1 : 1;
+      // Hind wings slightly delayed
+      const phase = wing.name.includes('Hind') ? Math.PI * 0.3 : 0;
+
       if (animState === 'idle') {
-        // Wings folded — occasional tiny twitch
-        wing.rotation.z = base + Math.sin(t * 0.5 + i * 2) * 0.01;
+        wing.rotation.x = Math.sin(t * 0.5 + i * 2) * 0.015 * sign;
+        wing.rotation.y = 0;
       } else if (animState === 'hover') {
-        // Moderate flutter — 25 Hz
-        wing.rotation.z = base + Math.sin(t * 25 + i * Math.PI) * 0.2;
+        wing.rotation.x = Math.sin(t * 25 + phase) * 0.25 * sign;
+        wing.rotation.y = Math.sin(t * 25 + phase) * 0.05;
       } else {
-        // Fast flutter — 40 Hz
-        wing.rotation.z = base + Math.sin(t * 40 + i * Math.PI) * 0.3;
+        wing.rotation.x = Math.sin(t * 40 + phase) * 0.35 * sign;
+        wing.rotation.y = Math.sin(t * 40 + phase) * 0.08;
       }
     });
   }
