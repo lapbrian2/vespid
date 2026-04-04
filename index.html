@@ -242,7 +242,7 @@
           const spanAxis = axes[2].name; // longest = wing span
           const flapAxis = axes[1].name; // mid = chord direction
 
-          c.userData.flapAxis = thinAxis; // rotate around thin axis = flapping motion
+          c.userData.flapAxis = spanAxis; // rotate around span axis = wing tilts up/down
           c.userData.pos = c.position.clone();
           wingMeshes.push(c);
           console.log(`Wing: ${c.name} | pos:(${c.position.x.toFixed(2)},${c.position.y.toFixed(2)},${c.position.z.toFixed(2)}) | size:(${sz.x.toFixed(3)},${sz.y.toFixed(3)},${sz.z.toFixed(3)}) | thin:${thinAxis} span:${spanAxis} flap-around:${thinAxis}`);
